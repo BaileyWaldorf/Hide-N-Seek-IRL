@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
-import Header from '/components/Header';
-import Login from './components/Login';
-import Navigation from './components/Navigation';
+import Header from './src/components/common/header';
+import Login from './src/components/common/login';
+import Footer from './src/components/common/footer';
 
 export default class App extends React.Component {
 
@@ -11,7 +11,7 @@ export default class App extends React.Component {
       <View style={{flex: 1}}>
         <Header />
         <Login />
-        <Navigation />
+        <Footer />
       </View>
     );
   }
