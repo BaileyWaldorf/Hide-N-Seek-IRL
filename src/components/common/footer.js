@@ -45,7 +45,7 @@ export default class Footer extends React.Component {
                                    fontWeight: "bold"
                               }}
                          >
-                              More!
+                              More
                          </Text>
                     </View>
                </View>
