@@ -11,6 +11,21 @@ export default class Parking extends React.Component {
      }
 
      componentDidMount() {
+          const interval = setInterval(
+               fetch("https://www.parsehub.com/api/v2/projects/tVVbVEcKt95h/run", {
+                    method: 'POST',
+                    headers: {
+                         Accept: 'application/json',
+                         'Content-Type': 'application/json',
+                    },
+                    form: {
+                         api_key: "thT2-TXpb3gU",
+                         start_url: "http://secure.parking.ucf.edu/GarageCount/",
+                         start_template: "main_template",
+                         send_email: "1"
+                    },
+               }), 3000);
+
           fetch("https://www.parsehub.com/api/v2/projects/tVVbVEcKt95h/last_ready_run/data?api_key=thT2-TXpb3gU", {
                method: 'GET',
                headers: {
