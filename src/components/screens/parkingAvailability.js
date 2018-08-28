@@ -11,6 +11,10 @@ export default class Parking extends React.Component {
      }
 
      componentDidMount() {
+          this.timer = setInterval(() => this.getGarageAvailability(), 3000)
+     }
+
+     getGarageAvailability = () => {
           fetch("https://www.parsehub.com/api/v2/projects/tVVbVEcKt95h/last_ready_run/data?api_key=thT2-TXpb3gU", {
                method: 'GET',
                headers: {

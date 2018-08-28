@@ -9,7 +9,9 @@ export default class Footer extends React.Component {
           };
      }
 
-     handlePress = () => {};
+     handlePress = () => {
+
+     };
 
      render() {
           return (
