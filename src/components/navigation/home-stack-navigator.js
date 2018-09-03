@@ -3,12 +3,13 @@ import { Text, View } from 'react-native';
 import { createBottomTabNavigator } from 'react-navigation';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Add from '../screens/add-package';
 
 class AddScreen extends React.Component {
   render() {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Add</Text>
+        <Add />
       </View>
     );
   }
@@ -18,7 +19,7 @@ class ArchiveScreen extends React.Component {
   render() {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Archive</Text>
+        <Text>Hello</Text>
       </View>
     );
   }
