@@ -15,10 +15,23 @@ export default class Add extends React.Component {
 		this.addPackage = this.addPackage.bind(this)
 	}
 
+	checkCarrier = () => {
+		// 1 - USPS
+		// 2 - USPS Express Mail
+		// 3 - UPS
+		// 4 - FedEx Ground
+		// 5 - FedEx Home
+		// 6 - FedEx Express
+		// 7 - DHL
+		// 8 -
+		let prefix = this.state.trackingNumber.slice(0, 4);
+		if(prefix === '9400' || prefix === '9205' || prefix === '9407')
+	}
+
 	addPackage = (carrier) => {
 		const parseString = require('react-native-xml2js').parseString;
 
-		fetch('http://production.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=%3C?xml%20version=%221.0%22%20encoding=%22UTF-8%22%20?%3E%20%3CTrackRequest%20USERID=%22901UNIVE3130%22%3E%20%3CTrackID%20ID=%229400111298370362821472%22%3E%3C/TrackID%3E%3C/TrackRequest%3E')
+		fetch(`http://production.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=%3C?xml%20version=%221.0%22%20encoding=%22UTF-8%22%20?%3E%20%3CTrackRequest%20USERID=%22901UNIVE3130%22%3E%20%3CTrackID%20ID=%22${this.state.trackingNumber}%22%3E%3C/TrackID%3E%3C/TrackRequest%3E`)
 			.then(response => response.text())
 			.then((response) => {
 				parseString(response, (err, result) => {
