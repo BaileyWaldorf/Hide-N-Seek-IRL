@@ -79,25 +79,25 @@ export default class Add extends React.Component {
 					</TouchableOpacity>
 				</View>
 				<TextInput style = {styles.input}
-				underlineColorAndroid = "transparent"
-				placeholder = "Carrier"
-				placeholderTextColor = "grey"
-				autoCapitalize = "none"
-				onChangeText = {this.handleCarrierInput}
+					underlineColorAndroid = "transparent"
+					placeholder = "Carrier"
+					placeholderTextColor = "grey"
+					autoCapitalize = "none"
+					onChangeText = {this.handleCarrierInput}
 				/>
 				<TextInput style = {styles.input}
-				underlineColorAndroid = "transparent"
-				placeholder = "Item Name (optional)"
-				placeholderTextColor = "grey"
-				autoCapitalize = "none"
-				onChangeText = {this.handleItemNameInput}
+					underlineColorAndroid = "transparent"
+					placeholder = "Item Name (optional)"
+					placeholderTextColor = "grey"
+					autoCapitalize = "none"
+					onChangeText = {this.handleItemNameInput}
 				/>
 				<TextInput style = {styles.input}
-				underlineColorAndroid = "transparent"
-				placeholder = "Sender (optional)"
-				placeholderTextColor = "grey"
-				autoCapitalize = "none"
-				onChangeText = {this.handleSenderInput}
+					underlineColorAndroid = "transparent"
+					placeholder = "Sender (optional)"
+					placeholderTextColor = "grey"
+					autoCapitalize = "none"
+					onChangeText = {this.handleSenderInput}
 				/>
 				<View style={{alignItems: 'center'}}>
 					<TouchableOpacity style={styles.addButton} onPress={this.addPackage}>
