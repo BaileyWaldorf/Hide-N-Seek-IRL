@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, Image, TextInput, TouchableOpacity, View, StyleSheet, Button } from "react-native";
+import { Text, Image, TextInput, TouchableOpacity, View, StyleSheet, Button, KeyboardAvoidingView, Platform } from "react-native";
+import InputScrollView from 'react-native-input-scroll-view';
 
 export default class Add extends React.Component {
 	constructor(props) {
@@ -10,22 +11,53 @@ export default class Add extends React.Component {
 			carrier: "",
 			itemName: "",
 			sender: "",
+			recipient: "",
 			packageData: []
 		};
-		this.addPackage = this.addPackage.bind(this)
 	}
 
-	checkCarrier = () => {
-		// 1 - USPS
-		// 2 - USPS Express Mail
-		// 3 - UPS
-		// 4 - FedEx Ground
-		// 5 - FedEx Home
-		// 6 - FedEx Express
-		// 7 - DHL
-		// 8 -
-		let prefix = this.state.trackingNumber.slice(0, 4);
-		if(prefix === '9400' || prefix === '9205' || prefix === '9407')
+	autofillCarrier = () => {
+		let prefix;
+		let suffix;
+		switch(this.state.trackingNumber.length) {
+		    case 22:
+				prefix = this.state.trackingNumber.slice(0, 5);
+		        if(prefix === '94001' || prefix === '92055' || prefix === '94073' || prefix ==='93033' || prefix ==='92701' || prefix ==='92088' || prefix ==='92021') {
+					this.setState({carrier: 'USPS'});
+					return 1;
+				}
+		        break;
+		    case 13:
+				prefix = this.state.trackingNumber.slice(0, 2);
+				suffix = this.state.trackingNumber.slice(-2);
+				if(prefix === 'EC' || prefix === 'EA' || prefix === 'CP') {
+					if(suffix === 'US') {
+						this.setState({carrier: 'USPS'});
+						return 1;
+					}
+				}
+		        break;
+			case 18:
+				prefix = this.state.trackingNumber.slice(0, 2);
+				if(prefix === '1Z') {
+					this.setState({carrier: 'UPS'});
+					return 2;
+				}
+				break;
+			case 10:
+				prefix = this.state.trackingNumber.slice(0, 2);
+				if(prefix === '82') {
+					this.setState({carrier: 'USPS'});
+					return 1;
+				}
+				else {
+					this.setState({carrier: 'DHL'});
+					return 3;
+				}
+				break;
+			default:
+				return 0;
+		}
 	}
 
 	addPackage = (carrier) => {
@@ -42,22 +74,6 @@ export default class Add extends React.Component {
 			}).catch((err) => {
 				console.log('fetch', err)
 			})
-	}
-
-	handleTrackingNumberInput = (number) => {
-		this.setState({ trackingNumber: number })
-	}
-
-	handleCarrierInput = (text) => {
-		this.setState({ carrier: text })
-	}
-
-	handleItemNameInput = (text) => {
-		this.setState({ itemName: text })
-	}
-
-	handleSenderInput = (text) => {
-		this.setState({ sender: text })
 	}
 
 	tutorialScreen = () => {
@@ -77,15 +93,19 @@ export default class Add extends React.Component {
 	}
 
 	addScreen = () => {
+		const offset = Platform.OS === 'ios' ? 0 : -80;
 		return(
-			<View>
+			<KeyboardAvoidingView style={styles.container} keyboardVerticalOffset={offset} behavior="padding" enabled>
 				<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center'}}>
 					<TextInput style = {styles.trackingNumberInput}
 						underlineColorAndroid = "transparent"
 						placeholder = "Tracking Number"
 						placeholderTextColor = "grey"
 						autoCapitalize = "none"
-						onChangeText = {this.handleTrackingNumberInput}
+						onChangeText = {(trackingNumber) => this.setState({trackingNumber})}
+						returnKeyType='next'
+						onSubmitEditing={() => { this.secondTextInput.focus(); }}
+						blurOnSubmit={false}
 					/>
 					<TouchableOpacity style={styles.barcodeButton} onPress={() => this.setState({showTutorial: true})}>
 						<Image style={{width: 32, height: 32}} source={require("../assets/barcode-icon.png")}/>
@@ -96,28 +116,50 @@ export default class Add extends React.Component {
 					placeholder = "Carrier"
 					placeholderTextColor = "grey"
 					autoCapitalize = "none"
-					onChangeText = {this.handleCarrierInput}
+					onFocus = {this.autofillCarrier}
+					defaultValue = {this.state.carrier}
+					onChangeText = {(carrier) => this.setState({carrier})}
+					returnKeyType='next'
+					ref={(input) => { this.secondTextInput = input; }}
+					onSubmitEditing={() => { this.thirdTextInput.focus(); }}
+					blurOnSubmit={false}
 				/>
 				<TextInput style = {styles.input}
 					underlineColorAndroid = "transparent"
 					placeholder = "Item Name (optional)"
 					placeholderTextColor = "grey"
 					autoCapitalize = "none"
-					onChangeText = {this.handleItemNameInput}
+					onChangeText = {(itemName) => this.setState({itemName})}
+					returnKeyType='next'
+					ref={(input) => { this.thirdTextInput = input; }}
+					onSubmitEditing={() => { this.forthTextInput.focus(); }}
+					blurOnSubmit={false}
 				/>
 				<TextInput style = {styles.input}
 					underlineColorAndroid = "transparent"
 					placeholder = "Sender (optional)"
 					placeholderTextColor = "grey"
 					autoCapitalize = "none"
-					onChangeText = {this.handleSenderInput}
+					onChangeText = {(sender) => this.setState({sender})}
+					returnKeyType='next'
+					ref={(input) => { this.forthTextInput = input; }}
+					onSubmitEditing={() => { this.fifthTextInput.focus(); }}
+					blurOnSubmit={false}
+				/>
+				<TextInput style = {styles.input}
+					underlineColorAndroid = "transparent"
+					placeholder = "Recipient (optional)"
+					placeholderTextColor = "grey"
+					autoCapitalize = "none"
+					onChangeText = {(recipient) => this.setState({recipient})}
+					ref={(input) => { this.fifthTextInput = input; }}
 				/>
 				<View style={{alignItems: 'center'}}>
 					<TouchableOpacity style={styles.addButton} onPress={this.addPackage}>
 						<Text style={{color: 'white', fontWeight: 'bold'}}>ADD</Text>
 					</TouchableOpacity>
 				</View>
-			</View>
+			</KeyboardAvoidingView>
 		)
 	}
 
@@ -174,7 +216,6 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		flex: 1,
-		padding: 50,
 		alignItems: "center",
 		justifyContent: "center"
 	}
