@@ -19,9 +19,7 @@ class App extends React.Component {
 	render() {
 		return (
 			<View style={styles.container}>
-				<Text>Hello world!</Text>
 				<HideNSeek style={{ width: Dimensions.get('window').width }} />
-				<Text>Hello world!</Text>
 			</View>
 		);
 	}
