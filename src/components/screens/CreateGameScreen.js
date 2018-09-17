@@ -10,6 +10,17 @@ export default class CreateGameScreen extends React.Component {
 		 };
 	}
 
+	static navigationOptions = {
+		title: `Welcome!`,
+		headerStyle: {
+			backgroundColor: '#40776f',
+		},
+		headerTintColor: '#fff',
+		headerTitleStyle: {
+			fontWeight: 'bold',
+		},
+	}
+
 	render() {
 		return (
 			<View style={styles.container}>
