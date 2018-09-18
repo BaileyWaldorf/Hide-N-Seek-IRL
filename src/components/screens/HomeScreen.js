@@ -20,20 +20,17 @@ export default class HomeScreen extends React.Component {
 	}
 
 	static navigationOptions = {
-		title: 'Welcome!',
-		headerStyle: {
-			backgroundColor: '#40776f',
-		},
-		headerTintColor: '#fff',
-		headerTitleStyle: {
-			fontWeight: 'bold',
-		},
+		header: null
 	}
 
 	render() {
 		return (
 			<View style={styles.container}>
 				<View style={styles.header}>
+					<Image
+						style={{flex: 1, width, height}}
+						source={require('./HomeScreenBackground2.jpg')}
+					/>
 					<TextInput style = {styles.input}
 						underlineColorAndroid = "transparent"
 						placeholder = "Choose a username..."
@@ -41,7 +38,7 @@ export default class HomeScreen extends React.Component {
 						autoCapitalize = "none"
 						onChangeText = {this.handleUsernameInput}
 					/>
-					<TouchableOpacity style={styles.buttonContainer}>
+				{/*<TouchableOpacity style={styles.buttonContainer}>
 						<Image
 							style={styles.button}
 							source={require('./account_circle.png')}
@@ -60,12 +57,13 @@ export default class HomeScreen extends React.Component {
 							}}
 						/>
 					</View>
-					<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center', width}}>
-						<TouchableOpacity style={styles.mainScreenButton} onPress={() => this.props.navigation.navigate('CreateGame', { name: this.state.username })}>
-							<Text style={{color: 'white', fontWeight: 'bold', fontSize: 20}}>Create Game</Text>
+					*/}
+					<View style={styles.buttonContainer}>
+						<TouchableOpacity style={styles.createGameButton} onPress={() => this.props.navigation.navigate('CreateGame', { name: this.state.username })}>
+							<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
 						</TouchableOpacity>
-						<TouchableOpacity style={styles.mainScreenButton} onPress={() => this.props.navigation.navigate('JoinGame', { name: this.state.username })}>
-							<Text style={{color: 'white', fontWeight: 'bold', fontSize: 20}}>Join Game</Text>
+						<TouchableOpacity style={styles.joinGameButton} onPress={() => this.props.navigation.navigate('JoinGame', { name: this.state.username })}>
+							<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
 						</TouchableOpacity>
 					</View>
 				</View>
@@ -88,14 +86,19 @@ const styles = StyleSheet.create({
 	},
 	input: {
 		position: 'absolute',
-		marginLeft: 10,
-		top: 10,
+		top: '65%',
+		left: '20%',
 		paddingLeft: 10,
-		height: 40,
-		width: 200,
-		backgroundColor: '#59A499',
-		borderRadius: 5,
-		color: 'white'
+		height: 50,
+		width: 250,
+		backgroundColor: 'rgba(16, 59, 89, 0.4)',
+		borderRadius: 10,
+		borderWidth: 1,
+		borderColor: 'black',
+		color: 'white',
+		alignItems: 'center',
+		justifyContent: 'center',
+		fontSize: 17
 	},
 	mapContainer: {
 		flex: .98,
@@ -107,30 +110,46 @@ const styles = StyleSheet.create({
 		height
 	},
 	buttonContainer: {
-		position: 'absolute',
-		width: 60,
-		height: 60,
-		top: 0,
-		right: 0,
+		flexDirection:'row',
+		flexWrap:'wrap',
 		alignItems: 'center',
-		justifyContent: 'center'
+		justifyContent: 'center',
+		width, position: 'absolute',
+		bottom: 40
 	},
 	button: {
 		width: 40,
 		height: 40,
 	},
-	mainScreenButton: {
-		height: 100,
-		width: 160,
-		margin: 20,
+	createGameButton: {
+		paddingLeft: 24,
+		paddingRight: 24,
+		paddingTop: 12,
+		paddingBottom: 12,
+		margin: 10,
 		marginTop: 20,
 		marginBottom: 15,
-		backgroundColor: '#59A499',
-		borderRadius: 7,
-		borderBottomWidth: 7,
+		backgroundColor: '#4bb53a',
+		borderRadius: 8,
+		borderWidth: 5,
 		alignItems: 'center',
 		justifyContent: 'center',
-		borderColor: '#67bfb1'
+		borderColor: 'rgba(0, 0, 0, 0.5)'
+	},
+	joinGameButton: {
+		paddingLeft: 24,
+		paddingRight: 24,
+		paddingTop: 12,
+		paddingBottom: 12,
+		margin: 10,
+		marginTop: 20,
+		marginBottom: 15,
+		backgroundColor: '#e89a47',
+		borderRadius: 8,
+		borderWidth: 5,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderColor: 'rgba(0, 0, 0, 0.5)'
 	}
 });
 
