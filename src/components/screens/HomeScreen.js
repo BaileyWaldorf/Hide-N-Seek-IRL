@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet, TextInput, TouchableOpacity, Dimensions, Platform, Image } from 'react-native';
+import { Text, View, StyleSheet, TextInput, TouchableOpacity, Dimensions, Platform, Image, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView, createStackNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import { MapView, Constants, PROVIDER_GOOGLE } from 'expo';
@@ -15,6 +15,13 @@ export default class HomeScreen extends React.Component {
 		 };
 	}
 
+	disableButtons = () => {
+		if(this.state.username.length > 0)
+			return false;
+		else
+			return true;
+	}
+
 	handleUsernameInput = (name) => {
 		this.setState({ username: name })
 	}
@@ -24,49 +31,61 @@ export default class HomeScreen extends React.Component {
 	}
 
 	render() {
+		const offset = Platform.OS === 'ios' ? 0 : -80;
+		const disabled = this.state.username.length == 0;
 		return (
 			<View style={styles.container}>
+			<KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={offset} behavior="padding" enabled>
 				<View style={styles.header}>
 					<Image
 						style={{flex: 1, width, height}}
 						source={require('./HomeScreenBackground2.jpg')}
 					/>
-					<TextInput style = {styles.input}
-						underlineColorAndroid = "transparent"
-						placeholder = "Choose a username..."
-						placeholderTextColor = "white"
-						autoCapitalize = "none"
-						onChangeText = {this.handleUsernameInput}
-					/>
-				{/*<TouchableOpacity style={styles.buttonContainer}>
-						<Image
-							style={styles.button}
-							source={require('./account_circle.png')}
+						<TextInput style = {styles.input}
+							underlineColorAndroid = "transparent"
+							placeholder = "Choose a username..."
+							placeholderTextColor = "white"
+							autoCapitalize = "none"
+							onChangeText = {this.handleUsernameInput}
 						/>
-					</TouchableOpacity>
-					<View style={styles.mapContainer}>
-						<MapView
-							style={styles.map}
-							provider={PROVIDER_GOOGLE}
-							customMapStyle={mapStyle}
-							initialRegion={{
-								latitude: 37.78825,
-								longitude: -122.4324,
-								latitudeDelta: 0.015,
-								longitudeDelta: 0.0121,
-							}}
-						/>
-					</View>
-					*/}
-					<View style={styles.buttonContainer}>
-						<TouchableOpacity style={styles.createGameButton} onPress={() => this.props.navigation.navigate('CreateGame', { name: this.state.username })}>
-							<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
+					{/*<TouchableOpacity style={styles.buttonContainer}>
+							<Image
+								style={styles.button}
+								source={require('./account_circle.png')}
+							/>
 						</TouchableOpacity>
-						<TouchableOpacity style={styles.joinGameButton} onPress={() => this.props.navigation.navigate('JoinGame', { name: this.state.username })}>
-							<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
-						</TouchableOpacity>
-					</View>
+						<View style={styles.mapContainer}>
+							<MapView
+								style={styles.map}
+								provider={PROVIDER_GOOGLE}
+								customMapStyle={mapStyle}
+								initialRegion={{
+									latitude: 37.78825,
+									longitude: -122.4324,
+									latitudeDelta: 0.015,
+									longitudeDelta: 0.0121,
+								}}
+							/>
+						</View>
+						*/}
+						<View style={styles.buttonContainer}>
+							<TouchableOpacity
+								style={disabled ? styles.disabledCreateGameButton : styles.createGameButton}
+								disabled={disabled}
+								onPress={() => this.props.navigation.navigate('CreateGame', { name: this.state.username })}
+							>
+								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
+							</TouchableOpacity>
+							<TouchableOpacity
+								style={disabled ? styles.disabledJoinGameButton : styles.joinGameButton}
+								disabled={disabled}
+								onPress={() => this.props.navigation.navigate('JoinGame', { name: this.state.username })}
+							>
+								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
+							</TouchableOpacity>
+						</View>
 				</View>
+				</KeyboardAvoidingView>
 			</View>
 		);
 	}
@@ -136,6 +155,21 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		borderColor: 'rgba(0, 0, 0, 0.5)'
 	},
+	disabledCreateGameButton: {
+		paddingLeft: 24,
+		paddingRight: 24,
+		paddingTop: 12,
+		paddingBottom: 12,
+		margin: 10,
+		marginTop: 20,
+		marginBottom: 15,
+		backgroundColor: 'rgba(130, 188, 120, 0.5)',
+		borderRadius: 8,
+		borderWidth: 5,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderColor: 'rgba(0, 0, 0, 0.5)'
+	},
 	joinGameButton: {
 		paddingLeft: 24,
 		paddingRight: 24,
@@ -145,6 +179,21 @@ const styles = StyleSheet.create({
 		marginTop: 20,
 		marginBottom: 15,
 		backgroundColor: '#e89a47',
+		borderRadius: 8,
+		borderWidth: 5,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderColor: 'rgba(0, 0, 0, 0.5)'
+	},
+	disabledJoinGameButton: {
+		paddingLeft: 24,
+		paddingRight: 24,
+		paddingTop: 12,
+		paddingBottom: 12,
+		margin: 10,
+		marginTop: 20,
+		marginBottom: 15,
+		backgroundColor: 'rgba(229, 185, 137, 0.8)',
 		borderRadius: 8,
 		borderWidth: 5,
 		alignItems: 'center',
