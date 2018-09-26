@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements';
-import TimePicker from 'react-native-simple-time-picker';
+import Slider from "react-native-slider";
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
@@ -14,13 +14,14 @@ export default class CreateGameScreen extends React.Component {
 			 lobbyPassword: '',
 			 selectedHours: 0,
 			 selectedMinutes: 0,
+			 gameLength: 0,
 		 };
 	}
 
 	static navigationOptions = ({navigation}) => {
 		return {
 			headerTransparent: true,
-			title: `Welcome, ${navigation.state.params.name}!`,
+			title: `Welcome ${navigation.state.params.name}!`,
 			headerTintColor: '#fff',
 			headerTitleStyle: {
 				fontWeight: 'bold',
@@ -61,14 +62,34 @@ export default class CreateGameScreen extends React.Component {
 						onChangeText = {this.handleLobbyPasswordInput}
 						secureTextEntry={true}
 					/>
-					<Text>{selectedHours}:{selectedMinutes}</Text>
-					<TimePicker
-						selectedHours={selectedHours}
-						selectedMinutes={selectedMinutes}
-						onChange={(hours, minutes) => this.setState({ selectedHours: hours, selectedMinutes: minutes })}
-						hoursUnit=' Hrs'
-						minutesUnit=' Min'
-					/>
+					<View style={styles.gameOptions}>
+						<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center'}}>
+							<Icon
+								name='md-stopwatch'
+								type='ionicon'
+								color='white'
+							/>
+							<Text style={{color: 'white', fontSize: 17, textAlign: 'center', marginLeft: 8}}>Time Limit: {this.state.gameLength} minutes</Text>
+						</View>
+						<Slider
+							value={this.state.gameLength}
+							onValueChange={gameLength => this.setState({ gameLength })}
+							minimumValue={0}
+							maximumValue={60}
+							step={5}
+							minimumTrackTintColor='#e89a47'
+							thumbStyle={styles.sliderThumb}
+							animateTransitions={true}
+						/>
+						<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center', marginTop: 20}}>
+							<Icon
+								name='md-person-add'
+								type='ionicon'
+								color='white'
+							/>
+							<Text style={{color: 'white', fontSize: 17, textAlign: 'center', marginLeft: 8}}>Add Players</Text>
+						</View>
+					</View>
 				</View>
 			</View>
 		);
@@ -94,7 +115,7 @@ const styles = StyleSheet.create({
 	},
 	input: {
 		height: 50,
-		width: 250,
+		width: 350,
 		backgroundColor: 'rgba(16, 59, 89, 0.4)',
 		borderRadius: 10,
 		borderWidth: 1,
@@ -102,8 +123,32 @@ const styles = StyleSheet.create({
 		color: 'white',
 		alignItems: 'center',
 		justifyContent: 'center',
-		fontSize: 17,
 		padding: 10,
-		marginBottom: 20
+		marginBottom: 20,
+		textAlign: 'center',
+		fontSize: 17
+	},
+	gameOptions: {
+		height: 300,
+		width: 350,
+		padding: 20,
+		backgroundColor: 'rgba(16, 59, 89, 0.4)',
+		justifyContent: 'center',
+		borderRadius: 10,
+		borderWidth: 1,
+		borderColor: 'black',
+		marginBottom: 20,
+	},
+	sliderThumb: {
+		backgroundColor: '#4bb53a',
+		borderRadius: 12.5,
+		borderWidth: 5,
+		borderColor: '#dbdbdb',
+		width: 25,
+		height: 25,
+		elevation: 5,
+		shadowColor: 'black',
+		shadowOpacity: 0.8,
+		shadowRadius: 10,
 	}
 });
