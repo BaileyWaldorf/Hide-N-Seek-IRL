@@ -24,6 +24,7 @@ exports.addAccount = functions.https.onRequest((req, res) => {
     "username": un,
     "ID": id,
     "session": null,
+    "lastActive": db.Timestamp.now(),
   }
 
   return users.add(data)
@@ -47,9 +48,10 @@ exports.updateAccount = functions.https.onRequest((req, res) => {
   if( QueryCatch([un, id]) )
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
+  var now = db.Timestamp.now();
   return users.where('ID', '==', id).get()
   .then(querySnap => {
-    querySnap.docs[0].ref.update({ "username" : un });
+    querySnap.docs[0].ref.update({ "username" : un, "lastActive" : now });
     return querySnap.docs[0];
   }).then(docSnap => {
     console.log('Account ', docSnap.get('ID'), ' has been updated to ', docSnap.get('username'));
@@ -78,6 +80,23 @@ exports.remAccount = functions.https.onRequest((req, res) => {
   }).catch(err => {
     console.error(err);
     res.status(500).send(err);
+  });
+})
+
+
+exports.nightlyCleanup = functions.https.onRequest((req, res) => {
+  var now = db.Timestamp.now().toMillis();
+  var yesterday = db.Timestamp.fromMillis(now - 86400000) // 24 * 60 * 60 * 1000; milliseconds in a day
+
+  return users.orderBy('lastActive', 'asc').where('lastActive', '<=', yesterday).get()
+  .then(querySnap => {
+    querySnap.forEach(docSnap => {
+      docSnap.ref.delete();
+    });
+    return res.status(200).send();
+  }).catch(err => {
+    console.log(err);
+    return res.status(500).send();
   });
 })
 
