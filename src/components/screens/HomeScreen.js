@@ -1,7 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, Dimensions, Platform, Image, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView, createStackNavigator } from 'react-navigation';
-import { Icon } from 'react-native-elements';
 import { MapView, Constants, PROVIDER_GOOGLE } from 'expo';
 
 const width = Dimensions.get('window').width;
@@ -57,26 +56,6 @@ export default class HomeScreen extends React.Component {
 							onFocus={() => {this.setState({showLogo: false})}}
 							onEndEditing={() => {this.setState({showLogo: true})}}
 						/>
-						{/*<TouchableOpacity style={styles.buttonContainer}>
-								<Image
-									style={styles.button}
-									source={require('./account_circle.png')}
-								/>
-							</TouchableOpacity>
-							<View style={styles.mapContainer}>
-								<MapView
-									style={styles.map}
-									provider={PROVIDER_GOOGLE}
-									customMapStyle={mapStyle}
-									initialRegion={{
-										latitude: 37.78825,
-										longitude: -122.4324,
-										latitudeDelta: 0.015,
-										longitudeDelta: 0.0121,
-									}}
-								/>
-							</View>
-							*/}
 							<View style={styles.buttonContainer}>
 								<TouchableOpacity
 									style={disabled ? styles.disabledCreateGameButton : styles.createGameButton}
@@ -219,58 +198,3 @@ const styles = StyleSheet.create({
 		borderColor: 'rgba(0, 0, 0, 0.5)'
 	}
 });
-
-const mapStyle = [
-	{
-		"featureType": "water",
-		"stylers": [
-			{ "visibility": "on" },
-			{ "color": "#1A87D6" }
-		]
-	},
-	{
-		"featureType": "landscape",
-		"stylers": [
-			{ "color": "#AFFFA0" }
-		]
-	},
-	{
-		"featureType": "road",
-		"elementType": "geometry",
-		"stylers": [
-			{ "color": "#59A499" }
-		]
-	},
-	{
-		"featureType": "poi",
-		"stylers": [
-			{ "color": "#EAFFE5" }
-		]
-	},
-	{
-		"featureType": "road",
-		"elementType": "geometry.stroke",
-		"stylers": [
-			{ "color": "#F0FF8D" },
-			{ "weight": 2.2 }
-		]
-	},
-	{
-		"featureType": "poi.business",
-		"stylers": [
-			{ "visibility": "off" }
-		]
-	},
-	{
-		"featureType": "poi.government",
-		"stylers": [
-			{ "visibility": "off" }
-		]
-	},
-	{
-		"featureType": "administrative.locality",
-		"stylers": [
-			{ "visibility": "off" }
-		]
-	}
-]

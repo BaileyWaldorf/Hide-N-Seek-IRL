@@ -17,8 +17,23 @@
     "ios": "react-native-scripts ios",
     "test": "jest"
   },
-  "jest": {
-    "preset": "jest-expo"
+	"jest": {
+  	"preset": "react-native",
+		"transform": {
+      "^.+\\.js?$": "babel-jest"
+    },
+		"transformIgnorePatterns": [
+			"!node_modules/react-runtime"
+		],
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
   },
   "dependencies": {
     "@mdi/js": "^2.6.95",
