@@ -60,14 +60,20 @@ export default class HomeScreen extends React.Component {
 								<TouchableOpacity
 									style={disabled ? styles.disabledCreateGameButton : styles.createGameButton}
 									disabled={disabled}
-									onPress={() => this.props.navigation.navigate('CreateGame', { name: this.state.username })}
+									onPress={
+										() => {this.setState({showLogo: true})},
+										() => this.props.navigation.navigate('CreateGame', { name: this.state.username })
+									}
 								>
 									<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
 								</TouchableOpacity>
 								<TouchableOpacity
 									style={disabled ? styles.disabledJoinGameButton : styles.joinGameButton}
 									disabled={disabled}
-									onPress={() => this.props.navigation.navigate('JoinGame', { name: this.state.username })}
+									onPress={
+										() => {this.setState({showLogo: true})},
+										() => this.props.navigation.navigate('JoinGame', { name: this.state.username })
+									}
 								>
 									<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
 								</TouchableOpacity>
