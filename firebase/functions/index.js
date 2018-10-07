@@ -3,18 +3,9 @@ const RandExp = require('randexp');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
-
 const NonStringQuerry = {
-  mes: "Request querry was not a string"
+  mes: "Request querry was not a string",
   code: 410
-}
-const AccountNotFound = {
-  mes: "Account does not exsist"
-  code: 420
-}
-const IDNotUnique = {
-  mes: "Account ID not Unique"
-  code: 430
 }
 
 
@@ -22,78 +13,76 @@ let db = admin.firestore();
 let users = db.collection('User Accounts')
 
 
-exports.addAcount = functions.https.onRequest((req, res) => {
+exports.addAccount = functions.https.onRequest((req, res) => {
   var un = req.query.username;
+  console.log(un)
+  if( QueryCatch([un]) )
+    return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
+
+  id = genID(res)
+  var data = {
+    "username": un,
+    "ID": id,
+    "session": null,
+  }
+
+  return users.add(data)
+  .then(docRef => {
+    console.log('Added Document ', docRef.id, 'to Database username: ', un, ', ID: ', id);
+    return docRef
+  }).then(() => {
+    console.log('Finshed adding user');
+    return res.status(200).send(id);
+  }).catch(err => {
+    console.error(err);
+    return res.status(500).send(err);
+  });
+})
+
+
+exports.updateAccount = functions.https.onRequest((req, res) => {
+  var un = req.query.username
   var id = req.query.ID
+  console.log(un, id)
   if( QueryCatch([un, id]) )
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
-  if(id === "") {
-    var data = {
-      "username": un,
-      "ID": genID(res),
-      "session": null,
-    }
-
-    users.add(data)
-    .then(docRef => {
-      console.log('Added Document ', docRef.id, 'to Database: ', 'username: ', un, ', ID: ', id);
-      return docRef
-    }).then(() => {
-      console.log('Finshed adding user');
-      return res.status(200).send(id);
-    }).catch(err => {
-      console.error(err);
-      return res.status(500).send(err);
-    });
-  }
-  else {
-    users.where('ID', '==', id).get()
-    .then(querySnap => {
-      return querySnap.docs[0].ref;
-    }).then(docRef => {
-      docRef.update({ "username" : un });
-      return docRef;
-    }).then(docRef =>{
-      console.log(`Username of account ${docRef.ID} updated to ${un}`);
-      return res.status(200).send(id);
-    }).catch(err => {
-      console.error(err);
-      return res.status(500).send(err);
-    });
-  }
+  return users.where('ID', '==', id).get()
+  .then(querySnap => {
+    querySnap.docs[0].ref.update({ "username" : un });
+    return querySnap.docs[0];
+  }).then(docSnap => {
+    console.log('Account ', docSnap.get('ID'), ' has been updated to ', docSnap.get('username'));
+    return res.status(200).send(id);
+  }).catch(err => {
+    console.error(err);
+    res.status(500).send(err);
+  });
 })
 
 
 exports.remAccount = functions.https.onRequest((req, res) => {
-  var id = req.querry.ID;
-  if(input === {} || !(input instanceof String))
+  var id = req.query.ID;
+  console.log(id);
+  if(QueryCatch([id]))
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
-  users.where('ID', '==', id).get()
+  return users.where('ID', '==', id).get()
   .then(querySnap => {
-    var docs = querySnap.docs;
-    if(len(docs) != 1) {
-      if(len(docs) < 1)
-        return res.status(AccountNotFound.code).send(AccountNotFound.mes);
-      else if(len(docs) > 1)
-        return res.status(IDNotUnique.code).send(IDNotUnique.mes);
-    }
-    console.log('Account: ', docs[0].ref.id, ' found');
-    return docs[0].ref;
-  }).then(docRef => {
-    return docRef.delete();
+    if(querySnap.docs.length === 0)
+      return Promise.reject(new Error('Account Does not Exist'));
+    return querySnap.docs[0].ref.delete();
   }).then(() => {
-    console.log('Account Deleted');
-    return res.status(200);
+    console.log('Account ', id, ' has been delted');
+    return res.status(200).send();
   }).catch(err => {
     console.error(err);
-    return res.status(500).send(err);
-  })
+    res.status(500).send(err);
+  });
 })
 
 
-const QueryCatch (queries) => {
+function QueryCatch(queries) {
   for(query of queries) {
     if( !(Object.prototype.toString.call(query) === "[object String]") ) {
       return true;
@@ -102,21 +91,20 @@ const QueryCatch (queries) => {
   return false;
 }
 
-const genID(res) => {
+function genID(res) {
   var unique = false
 
   while(!unique) {
-    var id = new RandExp([bcdfghjklmnpqrstvwxyz0-9]{4}, i).gen()
+    var id = new RandExp(/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ0-9]{4}/).gen()
 
     unique = users.where('ID', '==', id).get()
     .then(querySnap => {
-      if(len(querySnap.docs) != 0) {
-        return false
-      }
-      return true
+      return (querySnap.docs.length === 1);
     }).catch(err => {
       console.error(err);
       return res.status(500).send(err);
     });
   }
+
+  return id;
 }
