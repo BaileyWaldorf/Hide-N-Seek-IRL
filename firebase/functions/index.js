@@ -1,16 +1,16 @@
 const functions = require('firebase-functions');
-const RandExp = require('randexp');
 const admin = require('firebase-admin');
 admin.initializeApp();
+let db = admin.firestore();
+let users = db.collection('User Accounts');
+
+const RandExp = require('randexp');
+
 
 const NonStringQuerry = {
   mes: "Request querry was not a string",
   code: 410
 }
-
-
-let db = admin.firestore();
-let users = db.collection('User Accounts')
 
 
 exports.addAccount = functions.https.onRequest((req, res) => {
@@ -24,7 +24,7 @@ exports.addAccount = functions.https.onRequest((req, res) => {
     "username": un,
     "ID": id,
     "session": null,
-    "lastActive": db.Timestamp.now(),
+    "lastActive": admin.firestore.Timestamp.now(),
   }
 
   return users.add(data)
@@ -48,7 +48,7 @@ exports.updateAccount = functions.https.onRequest((req, res) => {
   if( QueryCatch([un, id]) )
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
-  var now = db.Timestamp.now();
+  var now = admin.firestore.Timestamp.now();
   return users.where('ID', '==', id).get()
   .then(querySnap => {
     querySnap.docs[0].ref.update({ "username" : un, "lastActive" : now });
@@ -85,8 +85,8 @@ exports.remAccount = functions.https.onRequest((req, res) => {
 
 
 exports.nightlyCleanup = functions.https.onRequest((req, res) => {
-  var now = db.Timestamp.now().toMillis();
-  var yesterday = db.Timestamp.fromMillis(now - 86400000) // 24 * 60 * 60 * 1000; milliseconds in a day
+  var now = admin.firestore.Timestamp.now().toMillis();
+  var yesterday = admin.firestore.Timestamp.fromMillis(now - 86400000) // 24 * 60 * 60 * 1000; milliseconds in a day
 
   return users.orderBy('lastActive', 'asc').where('lastActive', '<=', yesterday).get()
   .then(querySnap => {
