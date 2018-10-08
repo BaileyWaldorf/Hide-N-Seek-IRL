@@ -1,0 +1,1 @@
+The tests can be found in the "__tests__" folder on Github. There is only 1 so far and I am working on getting it to pass.
