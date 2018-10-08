@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 let db = admin.firestore();
 let users = db.collection('User Accounts');
+let games = db.collection('Game Sessions');
 
 const RandExp = require('randexp');
 
@@ -29,8 +30,8 @@ exports.addAccount = functions.https.onRequest((req, res) => {
 
   return users.add(data)
   .then(docRef => {
-    console.log('Added Document ', docRef.id, 'to Database username: ', un, ', ID: ', id);
-    return docRef
+    console.log('Adding Document ', docRef.id, 'to Database username: ', un, ', ID: ', id);
+    return docRef;
   }).then(() => {
     console.log('Finshed adding user');
     return res.status(200).send(id);
@@ -72,7 +73,7 @@ exports.remAccount = functions.https.onRequest((req, res) => {
   return users.where('ID', '==', id).get()
   .then(querySnap => {
     if(querySnap.docs.length === 0)
-      return Promise.reject(new Error('Account Does not Exist'));
+      return Promise.reject(new Error('Account does not exist'));
     return querySnap.docs[0].ref.delete();
   }).then(() => {
     console.log('Account ', id, ' has been delted');
@@ -101,6 +102,73 @@ exports.nightlyCleanup = functions.https.onRequest((req, res) => {
 })
 
 
+// TODO:
+exports.craeteSession = functions.https.onRequest((req, res) => {
+  var id = req.query.ID;
+  console.log(id);
+  if(QueryCatch([id, sessionId]))
+    return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
+
+  // TODO: create sepeate sessionId
+  var sessionId = genID().slice(0, 3);
+  var data = {
+    "session" : sessionId,
+    // "time" : time,
+    // other junk
+  };
+
+  return games.add(data)
+  .then(docRef => {
+    console.log('Creating Session ', sessionId);
+    return docRef
+  }).then(docRef => {
+    console.log('Finshed creating session');
+    return docRef.collection('Players').add({ "PlayerId" : id });
+  }).then(docRef => {
+    console.log('Added host ', id);
+    return res.status(200).send(sessionId);
+  }).catch(err => {
+    console.error(err);
+    return res.status(500).send(err);
+  });
+})
+
+
+exports.closeSession = functions.https.onRequest((req, res) => {
+  var sessionId = req.query.session;
+  console.log(sessionId);
+  if(QueryCatch([sessionId]))
+    return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
+
+  return games.where('ID', '==', sessionId).get()
+  .then(querySnap => {
+    if(querySnap.docs.length === 0)
+      return Promise.reject(new Error('Session does not exist'));
+    return querySnap.docs[0].ref.delete();
+  }).then(() => {
+    console.log(sessionId, ' game has ended');
+    return res.status(200).send();
+  }).catch(err => {
+    console.error(err);
+    res.status(500).send(err);
+  });
+})
+
+
+exports.joinSession = functions.https.onRequest((req, res) => {
+  var id = req.query.ID;
+  var sessionId = req.qerry.session;
+  console.log(id, sessionId);
+  if(QueryCatch([id, sessionId]))
+    return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
+})
+
+
+exports.leaveSession = functions.https.onRequest((req, res) => {
+
+})
+
+
 function QueryCatch(queries) {
   for(query of queries) {
     if( !(Object.prototype.toString.call(query) === "[object String]") ) {
@@ -110,6 +178,7 @@ function QueryCatch(queries) {
   return false;
 }
 
+// TODO: chage to accountID
 function genID(res) {
   var unique = false
 
@@ -126,4 +195,9 @@ function genID(res) {
   }
 
   return id;
+}
+
+// TODO: session ID generator
+function sessionID(res) {
+
 }
