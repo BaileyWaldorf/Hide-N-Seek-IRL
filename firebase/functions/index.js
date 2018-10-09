@@ -20,7 +20,7 @@ exports.addAccount = functions.https.onRequest((req, res) => {
   if( QueryCatch([un]) )
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
-  id = genID(res)
+  id = accountID(res)
   var data = {
     "username": un,
     "ID": id,
@@ -105,16 +105,21 @@ exports.nightlyCleanup = functions.https.onRequest((req, res) => {
 // TODO:
 exports.craeteSession = functions.https.onRequest((req, res) => {
   var id = req.query.ID;
-  console.log(id);
-  if(QueryCatch([id, sessionId]))
+  var length = req.query.length;
+  var radius = req.query.radius;
+  var lat = req.query.lat;
+  var long = req.query.long;
+  console.log(id, length, radius, lat, long);
+  if(QueryCatch([id, length, radius, lat, long, sessionId]))
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
-  // TODO: create sepeate sessionId
-  var sessionId = genID().slice(0, 3);
+  var sessionId = sessionID();
   var data = {
-    "session" : sessionId,
-    // "time" : time,
-    // other junk
+    "sessionID" : sessionId,
+    "length" : length,
+    "radius" : radius,
+    "lat" : lat,
+    "long" : long,
   };
 
   return games.add(data)
@@ -123,7 +128,7 @@ exports.craeteSession = functions.https.onRequest((req, res) => {
     return docRef
   }).then(docRef => {
     console.log('Finshed creating session');
-    return docRef.collection('Players').add({ "PlayerId" : id });
+    return docRef.collection('Unassigned').add({ "PlayerId" : id , "return" : req.ip });
   }).then(docRef => {
     console.log('Added host ', id);
     return res.status(200).send(sessionId);
@@ -178,8 +183,7 @@ function QueryCatch(queries) {
   return false;
 }
 
-// TODO: chage to accountID
-function genID(res) {
+function accountID(res) {
   var unique = false
 
   while(!unique) {
@@ -197,7 +201,20 @@ function genID(res) {
   return id;
 }
 
-// TODO: session ID generator
 function sessionID(res) {
+  var unique = false
 
+  while(!unique) {
+    var id = new RandExp(/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{4}/).gen()
+
+    unique = gamess.where('sessionID', '==', id).get()
+    .then(querySnap => {
+      return (querySnap.docs.length === 1);
+    }).catch(err => {
+      console.error(err);
+      return res.status(500).send(err);
+    });
+  }
+
+  return id;
 }
