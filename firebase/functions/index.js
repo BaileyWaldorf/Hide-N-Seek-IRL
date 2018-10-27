@@ -13,6 +13,11 @@ const NonStringQuerry = {
   code: 410
 }
 
+const UserAlreadyActive = {
+  mes: "User already in an active session",
+  code: 420
+}
+
 
 exports.addAccount = functions.https.onRequest((req, res) => {
   var un = req.query.username;
@@ -102,36 +107,54 @@ exports.nightlyCleanup = functions.https.onRequest((req, res) => {
 })
 
 
-// TODO:
+// TODO: test
 exports.craeteSession = functions.https.onRequest((req, res) => {
-  var id = req.query.ID;
-  var length = req.query.length;
+  var sesName = req.query.sesName;
+  var uid = req.query.UID;
+  var time = req.query.time;
   var radius = req.query.radius;
   var lat = req.query.lat;
   var long = req.query.long;
-  console.log(id, length, radius, lat, long);
-  if(QueryCatch([id, length, radius, lat, long, sessionId]))
+  console.log(sesName, uid, time, radius, lat, long);
+  if(QueryCatch([sesName, uid, time, radius, lat, long]))
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
-  var sessionId = sessionID();
+  var now = admin.firestore.Timestamp.now();
+
   var data = {
-    "sessionID" : sessionId,
-    "length" : length,
+    "name" : sesName,
+    "UID" : uid,
+    "time" : time,
     "radius" : radius,
     "lat" : lat,
     "long" : long,
+    "created" : now,
   };
+
+  var username = users.where('ID', '==', uid).get()
+  .then(querySnap => {
+    var p1 = querySnap.docs[0].get('username');
+    var p2 = querySnap.docs[0].get('session');
+    if (p2 !== null)
+      return Promiser.reject(new Error(UserAlreadyActive.mes))
+    var p3 = querySnap.docs[0].ref.update({ "lastActive" : now, "session" : uid });
+    return Promise.all([p1, p2, p3]);
+  }).then(promises => {
+    return promises[0]
+  }).catch(err => {
+    console.error(err);
+    res.status(500).send(err);
+  });
+  console.log(username);
 
   return games.add(data)
   .then(docRef => {
-    console.log('Creating Session ', sessionId);
+    console.log('Creating Session: ', sesName);
     return docRef
   }).then(docRef => {
     console.log('Finshed creating session');
-    return docRef.collection('Unassigned').add({ "PlayerId" : id , "return" : req.ip });
-  }).then(docRef => {
-    console.log('Added host ', id);
-    return res.status(200).send(sessionId);
+    docRef.collection('Seeker').add({ "username" : username, "UID" : uid });
+    return res.status(200).send(docRef.id);
   }).catch(err => {
     console.error(err);
     return res.status(500).send(err);
@@ -140,37 +163,105 @@ exports.craeteSession = functions.https.onRequest((req, res) => {
 
 
 exports.closeSession = functions.https.onRequest((req, res) => {
-  var sessionId = req.query.session;
-  console.log(sessionId);
-  if(QueryCatch([sessionId]))
+  var uid = req.query.ID;
+  console.log(uid);
+  if(QueryCatch([uid]))
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
-  return games.where('ID', '==', sessionId).get()
+  return games.where('UID', '==', uid).get()
   .then(querySnap => {
     if(querySnap.docs.length === 0)
       return Promise.reject(new Error('Session does not exist'));
-    return querySnap.docs[0].ref.delete();
-  }).then(() => {
-    console.log(sessionId, ' game has ended');
+    var p1 = querySnap.docs[0].ref.delete();
+    var p2 = users.where('session', '==', uid)
+    return Promise.all([p1, p2])
+  }).then(promises => {
+    console.log(uid, '\'s session has ended');
+    var plyrs = promises[1].docs
+    var proms = []
+    for (let plyr of plyrs) {
+      prom.push(plyr.ref.update({ "session" : null }));
+    }
+    return Promise.all(proms);
+  }).then(promises => {
     return res.status(200).send();
   }).catch(err => {
     console.error(err);
-    res.status(500).send(err);
+    return res.status(500).send(err);
   });
 })
 
 
 exports.joinSession = functions.https.onRequest((req, res) => {
   var id = req.query.ID;
-  var sessionId = req.qerry.session;
-  console.log(id, sessionId);
-  if(QueryCatch([id, sessionId]))
+  var sesId = req.query.session;
+  console.log(id, sesId);
+  if(QueryCatch([id, sesId]))
     return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
+
+  var now = admin.firestore.Timestamp.now();
+
+  var username = users.where('ID', '==', id).get()
+  .then(querySnap => {
+    var p1 = querySnap.docs[0].get('username');
+    var p2 = querySnap.docs[0].get('session');
+    if (p2 !== null)
+      return Promiser.reject(new Error(UserAlreadyActive.mes))
+    var p3 = querySnap.docs[0].ref.update({ "lastActive" : now, "session" : sesId });
+    return Promise.all([p1, p2, p3]);
+  }).then(promises => {
+    return promises[0]
+  }).catch(err => {
+    console.error(err);
+    res.status(500).send(err);
+  });
+  console.log(username);
+
+  return games.where('UID', '==', sesId).get()
+  .then(querySnap => {
+    if(querySnap.docs.length === 0)
+      return Promise.reject(new Error('Session does not exist'));
+    var gameRef = querySnap.docs[0].ref
+    gameRef.collection('Hiders').add({ "username" : username, "UID" : uid })
+    return gameRef
+  }).then(docRef => {
+    console.log(username, ' added to ', uid, '\'s session');
+    return res.status(200).send(docRef.id)
+  }).catch(err => {
+    console.error(err);
+    return res.status(500).send(err);
+  });
 })
 
 
 exports.leaveSession = functions.https.onRequest((req, res) => {
+  var id = req.query.ID;
+  console.log(id);
+  if(QueryCatch([id]))
+    return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
 
+  return users.where('ID', '==', id).get()
+  .then(querySnap => {
+    var ses = querySnap.docs[0].get('session');
+    if(ses === null)
+      return Promise.reject(new Error('User is not in a session'));
+    if(ses === id)
+      return Promise.reject(new Error('User is the Seeker in this session'));
+    var p1 = querySnap.docs[0].ref.update({ "session" : null });
+    var p2 = games.where('UID', '==', ses).get()
+    return Promise.all([p1, p2]);
+  }).then(promises => {
+    console.log(id, 'removed from session');
+    var hiders = promises[1].docs[0].ref.collection('Hiders');
+    return hiders.where('UID', '==', id).get()
+  }).then(querySnap => {
+    return querySnap.docs[0].ref.delete()
+  }).then(() => {
+    return res.status(200).send()
+  }).catch(err => {
+    console.error(err);
+    return res.status(500).send(err);
+  });
 })
 
 
@@ -190,24 +281,6 @@ function accountID(res) {
     var id = new RandExp(/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ0-9]{4}/).gen()
 
     unique = users.where('ID', '==', id).get()
-    .then(querySnap => {
-      return (querySnap.docs.length === 1);
-    }).catch(err => {
-      console.error(err);
-      return res.status(500).send(err);
-    });
-  }
-
-  return id;
-}
-
-function sessionID(res) {
-  var unique = false
-
-  while(!unique) {
-    var id = new RandExp(/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{4}/).gen()
-
-    unique = gamess.where('sessionID', '==', id).get()
     .then(querySnap => {
       return (querySnap.docs.length === 1);
     }).catch(err => {
