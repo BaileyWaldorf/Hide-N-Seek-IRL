@@ -16,6 +16,7 @@ export default class HomeScreen extends React.Component {
 		 };
 	}
 
+
 	disableButtons = () => {
 		if(this.state.username.length > 0)
 			return false;
