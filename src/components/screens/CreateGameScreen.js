@@ -3,22 +3,25 @@ import { Text, View, StyleSheet, TextInput, TouchableOpacity, Image, Dimensions 
 import { Icon } from 'react-native-elements';
 import Slider from "react-native-slider";
 import Modal from "react-native-modal";
+import { MapView, Constants, PROVIDER_GOOGLE } from 'expo';
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 
 export default class CreateGameScreen extends React.Component {
 	constructor(props) {
-		 super(props);
-		 this.state = {
-			 lobbyName: '',
-			 lobbyPassword: '',
-			 selectedHours: 0,
-			 selectedMinutes: 0,
-			 gameLength: 15,
-			 mapRadius: 0,
-			 showMapModal: true,
-		 };
+		super(props);
+		this.state = {
+			lobbyName: '',
+			lobbyPassword: '',
+			gameLength: 15,
+			mapRadius: 50,
+			showMapModal: false,
+			LATLNG: {
+				latitude: 37.78825,
+				longitude: -122.4324,
+			},
+		};
 	}
 
 	static navigationOptions = ({navigation}) => {
@@ -60,7 +63,9 @@ export default class CreateGameScreen extends React.Component {
 	}
 
 	render() {
-		const { selectedHours, selectedMinutes } = this.state;
+		const disabled = this.state.lobbyName.length == 0;
+		const name = this.props.navigation.state.params.name;
+		const uid = this.props.navigation.state.params.uid;
 		return (
 			<View style={styles.container}>
 				<View style={{position: 'absolute', top: 0, left: 0, width, height}}>
@@ -68,7 +73,7 @@ export default class CreateGameScreen extends React.Component {
 						source={require('./HomeScreenBackgroundBlurred.jpg')}
 					/>
 				</View>
-				<View style={{flex: 1, backgroundColor: 'transparent', justifyContent: 'center'}}>
+				<View style={{flex: 1, backgroundColor: 'transparent', justifyContent: 'center', marginTop: 70}}>
 					<TextInput style = {styles.input}
 						underlineColorAndroid = "transparent"
 						placeholder = "Lobby name..."
@@ -78,7 +83,7 @@ export default class CreateGameScreen extends React.Component {
 					/>
 					<TextInput style = {styles.input}
 						underlineColorAndroid = "transparent"
-						placeholder = "Lobby password..."
+						placeholder = "Lobby password... (optional)"
 						placeholderTextColor = "white"
 						autoCapitalize = "none"
 						onChangeText = {this.handleLobbyPasswordInput}
@@ -109,7 +114,7 @@ export default class CreateGameScreen extends React.Component {
 								type='ionicon'
 								color='white'
 							/>
-							<Text style={{color: 'white', fontSize: 17, textAlign: 'center', marginLeft: 8}}>Map Limit: {this.state.mapRadius} miles</Text>
+							<Text style={{color: 'white', fontSize: 17, textAlign: 'center', marginLeft: 8}}>Map Limit: {this.state.mapRadius} meters</Text>
 						</View>
 						<View style={{alignItems: 'center'}}>
 							<TouchableOpacity
@@ -119,33 +124,62 @@ export default class CreateGameScreen extends React.Component {
 								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>SELECT RADIUS</Text>
 							</TouchableOpacity>
 						</View>
-						<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center', marginTop: 30}}>
+						{/* <View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center', marginTop: 30}}>
 							<Icon
 								name='md-person-add'
 								type='ionicon'
 								color='white'
 							/>
 							<Text style={{color: 'white', fontSize: 17, textAlign: 'center', marginLeft: 8}}>Add Players</Text>
-						</View>
+						</View> */}
 					</View>
-					<Modal isVisible={this.state.showMapModal}>
-						<View style={{ flex: 1, backgroundColor: '#FFF' }}>
-							<Text>Hello!</Text>
-							<TouchableOpacity onPress={this._toggleModal}>
-								<Text>Hide me!</Text>
-							</TouchableOpacity>
+					<TouchableOpacity
+						style={disabled ? styles.disabledCreateButton : styles.createButton}
+						disabled={disabled}
+						onPress={
+							() => this.props.navigation.navigate('CreateGame', { name: this.state.username })
+						}
+					>
+						<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
+					</TouchableOpacity>
+					<Modal style ={{flex: 1, marginTop: 80, marginBottom: 80, marginLeft:40, marginRight: 40, borderRadius: 20}}
+						isVisible={this.state.showMapModal}>
+						<View style={{ flex: 1, backgroundColor: '#FFF', borderRadius: 20 }}>
 							<View style={styles.mapContainer}>
 								<MapView
-									style={styles.map}
+									style={{flex: 1}}
 									provider={PROVIDER_GOOGLE}
 									customMapStyle={mapStyle}
+									minZoomLevel={17}
 									initialRegion={{
 										latitude: 37.78825,
 										longitude: -122.4324,
 										latitudeDelta: 0.015,
 										longitudeDelta: 0.0121,
 									}}
-								/>
+								>
+									<MapView.Circle
+										center = { this.state.LATLNG }
+										radius = { this.state.mapRadius }
+										strokeWidth = { 1 }
+										strokeColor = { '#1a66ff' }
+										fillColor = { 'rgba(230,238,255,0.5)' }
+									/>
+								</MapView>
+							</View>
+							<View style={{alignItems: 'center'}}>
+								<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center'}}>
+									<TouchableOpacity style={{marginRight: 5}} onPress={() => {this.setState({mapRadius: this.state.mapRadius - 1})}}>
+										<Text style={{color: 'green', fontWeight: 'bold', fontSize: 55}}>-</Text>
+									</TouchableOpacity>
+									<Text style={{fontSize: 25}}>{this.state.mapRadius} meters</Text>
+									<TouchableOpacity style={{marginLeft: 5}} onPress={() => {this.setState({mapRadius: this.state.mapRadius + 1})}}>
+										<Text style={{color: 'green', fontWeight: 'bold', fontSize: 55}}>+</Text>
+									</TouchableOpacity>
+								</View>
+								<TouchableOpacity style={styles.doneButton} onPress={this._toggleModal}>
+									<Text style={{color: 'white', fontWeight: 'bold'}}>DONE</Text>
+								</TouchableOpacity>
 							</View>
 						</View>
 					</Modal>
@@ -159,6 +193,15 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		alignItems: "center",
+	},
+	mapContainer: {
+		flex: 1,
+		margin: 10,
+		overflow: 'hidden',
+		borderRadius: 20,
+		shadowOpacity: 0.4,
+		shadowRadius: 1,
+		shadowOffset: {height: 2, width: 0}
 	},
 	header: {
 		flex: .14,
@@ -188,7 +231,7 @@ const styles = StyleSheet.create({
 		fontSize: 17
 	},
 	gameOptions: {
-		height: 300,
+		height: 250,
 		width: 350,
 		padding: 20,
 		backgroundColor: 'rgba(16, 59, 89, 0.4)',
@@ -220,7 +263,48 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		borderColor: 'rgba(0, 0, 0, 0.5)'
-	}
+	},
+	doneButton: {
+		height: 44,
+		width: 100,
+		marginBottom: 20,
+		backgroundColor: '#4bb53a',
+		borderRadius: 4,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderBottomWidth: 4,
+		borderColor: '#2f7723'
+	},
+	createButton: {
+		paddingLeft: 24,
+		paddingRight: 24,
+		paddingTop: 12,
+		paddingBottom: 12,
+		margin: 10,
+		marginTop: 20,
+		marginBottom: 15,
+		backgroundColor: '#4bb53a',
+		borderRadius: 8,
+		borderWidth: 5,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderColor: 'rgba(0, 0, 0, 0.5)'
+	},
+	disabledCreateButton: {
+		paddingLeft: 24,
+		paddingRight: 24,
+		paddingTop: 12,
+		paddingBottom: 12,
+		margin: 10,
+		marginTop: 20,
+		marginBottom: 15,
+		backgroundColor: 'rgba(130, 188, 120, 0.5)',
+		borderRadius: 8,
+		borderWidth: 5,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderColor: 'rgba(0, 0, 0, 0.5)'
+	},
 });
 
 const mapStyle = [
