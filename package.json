@@ -17,14 +17,14 @@
     "ios": "react-native-scripts ios",
     "test": "jest"
   },
-	"jest": {
-  	"preset": "react-native",
-		"transform": {
+  "jest": {
+    "preset": "react-native",
+    "transform": {
       "^.+\\.js?$": "babel-jest"
     },
-		"transformIgnorePatterns": [
-			"!node_modules/react-runtime"
-		],
+    "transformIgnorePatterns": [
+      "!node_modules/react-runtime"
+    ],
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "moduleFileExtensions": [
       "ts",
