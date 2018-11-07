@@ -31,7 +31,21 @@ export default class HomeScreen extends React.Component {
 		this.setState({ game: Gamename })
 	}
 
-
+ 	joinLobby = () => {
+		this.setState({loading: true});
+		return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/joinSession?ID=<uid>&session=<sesid>${this.state.Gamename, navigation.state.params.name}`)
+				.then(response => response.text())
+				.then(text => {
+					console.log(text)
+					return this.setState({accountID: text});
+				})
+				.catch(e => {
+					console.log(e)
+					this.setState({loading: false});
+					return e;
+				})
+			)
+	}
 
 	render() {
 		const offset = Platform.OS === 'ios' ? 0 : -40;
@@ -56,7 +70,9 @@ export default class HomeScreen extends React.Component {
 							<View style={styles.buttonContainer}>
 								<TouchableOpacity
 									style={styles.joinGameButton}
-									onPress={() => this.props.navigation.navigate('Lobby', { Gamename: this.state.game })}
+									onPress={
+										() => {this.joinLobby},
+										() => this.props.navigation.navigate('Lobby', { Gamename: this.state.game })}
 								>
 									<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
 								</TouchableOpacity>

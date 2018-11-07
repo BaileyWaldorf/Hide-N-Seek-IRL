@@ -1,21 +1,24 @@
 import React from 'react';
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, Dimensions, Platform, Image, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView, createStackNavigator } from 'react-navigation';
-import { Icon } from 'react-native-elements';
-import { MapView, Constants, PROVIDER_GOOGLE } from 'expo';
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 
 export default class HomeScreen extends React.Component {
 	constructor(props) {
-		 super(props);
-		 this.state = {
-			  username: "",
-			  showLogo: true
-		 };
+		super(props);
+			this.state = {
+			username: "",
+			showLogo: true,
+			loading: false,
+			accountID: '',
+		};
 	}
 
+	static navigationOptions = {
+		header: null
+	}
 
 	disableButtons = () => {
 		if(this.state.username.length > 0)
@@ -28,8 +31,34 @@ export default class HomeScreen extends React.Component {
 		this.setState({ username: name })
 	}
 
-	static navigationOptions = {
-		header: null
+	addAccount = () => {
+		this.setState({loading: true});
+		if(this.state.accountID == '') {
+			return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/addAccount?username=${this.props.navigation.state.params.name}`)
+				.then(response => response.text())
+				.then(text => {
+					console.log(text)
+					return this.setState({accountID: text});
+				})
+				.catch(e => {
+					console.log(e)
+					this.setState({loading: false});
+					return e;
+				})
+			)
+		} else {
+			return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/updateAccount?username=${this.state.username}&ID=${this.state.accountID}`)
+				.then(response => response.text())
+				.then(text => {
+					console.log(text)
+					return this.setState({accountID: text});
+				})
+				.catch(e => {
+					console.log(e)
+					return e;
+				})
+			)
+		}
 	}
 
 	render() {
@@ -58,42 +87,33 @@ export default class HomeScreen extends React.Component {
 							onFocus={() => {this.setState({showLogo: false})}}
 							onEndEditing={() => {this.setState({showLogo: true})}}
 						/>
-						{/*<TouchableOpacity style={styles.buttonContainer}>
-								<Image
-									style={styles.button}
-									source={require('./account_circle.png')}
-								/>
+						<View style={styles.buttonContainer}>
+							<TouchableOpacity
+								style={disabled ? styles.disabledCreateGameButton : styles.createGameButton}
+								disabled={disabled || this.state.loading}
+								onPress={
+									() => {this.addAccount},
+									() => {this.setState({showLogo: true, loading: false})},
+									() => this.props.navigation.navigate('CreateGame', { name: this.state.username, uid: this.state.accountID})
+								}
+							>
+								{this.state.loading
+									? <Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>LOADING...</Text>
+									: <Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
+								}
 							</TouchableOpacity>
-							<View style={styles.mapContainer}>
-								<MapView
-									style={styles.map}
-									provider={PROVIDER_GOOGLE}
-									customMapStyle={mapStyle}
-									initialRegion={{
-										latitude: 37.78825,
-										longitude: -122.4324,
-										latitudeDelta: 0.015,
-										longitudeDelta: 0.0121,
-									}}
-								/>
-							</View>
-							*/}
-							<View style={styles.buttonContainer}>
-								<TouchableOpacity
-									style={disabled ? styles.disabledCreateGameButton : styles.createGameButton}
-									disabled={disabled}
-									onPress={() => this.props.navigation.navigate('CreateGame', { name: this.state.username })}
-								>
-									<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
-								</TouchableOpacity>
-								<TouchableOpacity
-									style={disabled ? styles.disabledJoinGameButton : styles.joinGameButton}
-									disabled={disabled}
-									onPress={() => this.props.navigation.navigate('JoinGame', { name: this.state.username })}
-								>
-									<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
-								</TouchableOpacity>
-							</View>
+							<TouchableOpacity
+								style={disabled ? styles.disabledJoinGameButton : styles.joinGameButton}
+								disabled={disabled || this.state.loading}
+								onPress={
+									() => {this.addAccount},
+									() => {this.setState({showLogo: true, loading: false})},
+									() => this.props.navigation.navigate('JoinGame', { name: this.state.username, uid: this.state.accountID})
+								}
+							>
+								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
+							</TouchableOpacity>
+						</View>
 					</View>
 				</KeyboardAvoidingView>
 			</View>
@@ -137,15 +157,6 @@ const styles = StyleSheet.create({
 		fontSize: 17,
 		marginBottom: 50,
 		textAlign: 'center'
-	},
-	mapContainer: {
-		flex: .98,
-		marginTop: 60,
-	},
-	map: {
-		flex: 1,
-		width,
-		height
 	},
 	buttonContainer: {
 		flexDirection:'row',
@@ -220,58 +231,3 @@ const styles = StyleSheet.create({
 		borderColor: 'rgba(0, 0, 0, 0.5)'
 	}
 });
-
-const mapStyle = [
-	{
-		"featureType": "water",
-		"stylers": [
-			{ "visibility": "on" },
-			{ "color": "#1A87D6" }
-		]
-	},
-	{
-		"featureType": "landscape",
-		"stylers": [
-			{ "color": "#AFFFA0" }
-		]
-	},
-	{
-		"featureType": "road",
-		"elementType": "geometry",
-		"stylers": [
-			{ "color": "#59A499" }
-		]
-	},
-	{
-		"featureType": "poi",
-		"stylers": [
-			{ "color": "#EAFFE5" }
-		]
-	},
-	{
-		"featureType": "road",
-		"elementType": "geometry.stroke",
-		"stylers": [
-			{ "color": "#F0FF8D" },
-			{ "weight": 2.2 }
-		]
-	},
-	{
-		"featureType": "poi.business",
-		"stylers": [
-			{ "visibility": "off" }
-		]
-	},
-	{
-		"featureType": "poi.government",
-		"stylers": [
-			{ "visibility": "off" }
-		]
-	},
-	{
-		"featureType": "administrative.locality",
-		"stylers": [
-			{ "visibility": "off" }
-		]
-	}
-]
