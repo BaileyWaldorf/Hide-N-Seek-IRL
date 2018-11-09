@@ -107,7 +107,6 @@ exports.nightlyCleanup = functions.https.onRequest((req, res) => {
 })
 
 
-// TODO: test
 exports.craeteSession = functions.https.onRequest((req, res) => {
   var sesName = req.query.sesName;
   var uid = req.query.UID;
@@ -129,31 +128,42 @@ exports.craeteSession = functions.https.onRequest((req, res) => {
     "lat" : lat,
     "long" : long,
     "created" : now,
+    "started" : false,
   };
 
-  var username = users.where('ID', '==', uid).get()
+  return users.where('ID', '==', uid).get()
   .then(querySnap => {
+    // Get the user's username
     var p1 = querySnap.docs[0].get('username');
-    var p2 = querySnap.docs[0].get('session');
-    if (p2 !== null)
-      return Promiser.reject(new Error(UserAlreadyActive.mes))
-    var p3 = querySnap.docs[0].ref.update({ "lastActive" : now, "session" : uid });
-    return Promise.all([p1, p2, p3]);
+    // Get their current session
+    var ses = querySnap.docs[0].get('session');
+    // If the session is not null
+      // Reject the promise
+    if (ses !== null)
+      return Promise.reject(new Error(UserAlreadyActive.mes))
+    // Else update the account's lastActive and session with now and uid
+    var p2 = querySnap.docs[0].ref.update({ "lastActive" : now, "session" : uid });
+    // and create the new session
+    var p3 = games.add(data)
+    // return the username and the document refernce
+    return Promise.all([p1, p2, p3])
   }).then(promises => {
-    return promises[0]
-  }).catch(err => {
-    console.error(err);
-    res.status(500).send(err);
-  });
-  console.log(username);
-
-  return games.add(data)
-  .then(docRef => {
-    console.log('Creating Session: ', sesName);
-    return docRef
+    // promises[0] := the creator's username
+    // promises[2] := the new session's docRef
+    // create a new Seeker collection in the session
+    var docRef = promises[2]
+    var p1 = docRef.collection('Seeker')
+    var p2 = promises[0]
+    return Promise.all([p1, p2])
+  }).then(promises => {
+    // add the creator to the Seeker collection
+    var colRef = promises[0]
+    var username = promises[1]
+    colRef.add({ "username" : username, "UID" : uid })
+    // return colRef parent
+    return colRef.parent
   }).then(docRef => {
-    console.log('Finshed creating session');
-    docRef.collection('Seeker').add({ "username" : username, "UID" : uid });
+    // End the https call by sending docRef.id
     return res.status(200).send(docRef.id);
   }).catch(err => {
     console.error(err);
@@ -173,14 +183,14 @@ exports.closeSession = functions.https.onRequest((req, res) => {
     if(querySnap.docs.length === 0)
       return Promise.reject(new Error('Session does not exist'));
     var p1 = querySnap.docs[0].ref.delete();
-    var p2 = users.where('session', '==', uid)
+    var p2 = users.where('session', '==', uid).get()
     return Promise.all([p1, p2])
   }).then(promises => {
     console.log(uid, '\'s session has ended');
     var plyrs = promises[1].docs
     var proms = []
     for (let plyr of plyrs) {
-      prom.push(plyr.ref.update({ "session" : null }));
+      proms.push(plyr.ref.update({ "session" : null }));
     }
     return Promise.all(proms);
   }).then(promises => {
@@ -201,35 +211,48 @@ exports.joinSession = functions.https.onRequest((req, res) => {
 
   var now = admin.firestore.Timestamp.now();
 
-  var username = users.where('ID', '==', id).get()
+  return users.where('ID', '==', id).get()
   .then(querySnap => {
+    // get the player's username
     var p1 = querySnap.docs[0].get('username');
-    var p2 = querySnap.docs[0].get('session');
-    if (p2 !== null)
-      return Promiser.reject(new Error(UserAlreadyActive.mes))
-    var p3 = querySnap.docs[0].ref.update({ "lastActive" : now, "session" : sesId });
-    return Promise.all([p1, p2, p3]);
+    // get the player's current Session
+    var ses = querySnap.docs[0].get('session');
+    // if the current session is not null
+      // reject the promise
+    if (ses !== null)
+      return Promise.reject(new Error(UserAlreadyActive.mes))
+    // Else update the account's lastActive and session with now and uid
+    var p2 = querySnap.docs[0].ref.update({ "lastActive" : now, "session" : sesId });
+    // and get a reference to the game being joined
+    var p3 = games.where('UID', '==', sesId).get()
+    // return the game's document reference and the player's username
+    return Promise.all([p1, p2, p3])
   }).then(promises => {
-    return promises[0]
-  }).catch(err => {
-    console.error(err);
-    res.status(500).send(err);
-  });
-  console.log(username);
-
-  return games.where('UID', '==', sesId).get()
-  .then(querySnap => {
+    // promises[0] := username
+    var p1 = promises[0]
+    // promises[1] := querySnap
+    var querySnap = promises[2]
     if(querySnap.docs.length === 0)
       return Promise.reject(new Error('Session does not exist'));
-    var gameRef = querySnap.docs[0].ref
-    gameRef.collection('Hiders').add({ "username" : username, "UID" : uid })
-    return gameRef
+    var docRef = querySnap.docs[0].ref
+    // get a reference to the Hiders collection in the game
+    var p2 = docRef.collection('Hiders')
+    return Promise.all([p1, p2])
+  }).then(promises => {
+    // promises[0] := username
+    var username = promises[0]
+    // promises[1] := colRef
+    var colRef = promises[1]
+    // add the player to the Hiders collection in the game
+    colRef.add({ "username" : username, "UID" : id })
+    // return colRef parent
+    return colRef.parent
   }).then(docRef => {
-    console.log(username, ' added to ', uid, '\'s session');
+    // End the https call by sending docRef.id
     return res.status(200).send(docRef.id)
   }).catch(err => {
     console.error(err);
-    return res.status(500).send(err);
+    res.status(500).send(err);
   });
 })
 
@@ -258,6 +281,22 @@ exports.leaveSession = functions.https.onRequest((req, res) => {
     return querySnap.docs[0].ref.delete()
   }).then(() => {
     return res.status(200).send()
+  }).catch(err => {
+    console.error(err);
+    return res.status(500).send(err);
+  });
+})
+
+
+exports.startgame = functions.https.onRequest((req, res) => {
+  var sesId = req.query.ID;
+  console.log(sesId);
+  if(QueryCatch([sesId]))
+    return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
+
+  games.where('UID', '==', sesId).get()
+  .then(querySnap => {
+
   }).catch(err => {
     console.error(err);
     return res.status(500).send(err);
