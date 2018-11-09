@@ -288,22 +288,6 @@ exports.leaveSession = functions.https.onRequest((req, res) => {
 })
 
 
-exports.startgame = functions.https.onRequest((req, res) => {
-  var sesId = req.query.ID;
-  console.log(sesId);
-  if(QueryCatch([sesId]))
-    return res.status(NonStringQuerry.code).send(NonStringQuerry.mes);
-
-  games.where('UID', '==', sesId).get()
-  .then(querySnap => {
-
-  }).catch(err => {
-    console.error(err);
-    return res.status(500).send(err);
-  });
-})
-
-
 function QueryCatch(queries) {
   for(query of queries) {
     if( !(Object.prototype.toString.call(query) === "[object String]") ) {
