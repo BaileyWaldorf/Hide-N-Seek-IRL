@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, Dimensions, Platform, Image, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView, createStackNavigator } from 'react-navigation';
+import { Font } from 'expo';
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
@@ -31,17 +32,20 @@ export default class HomeScreen extends React.Component {
 		this.setState({ username: name })
 	}
 
-	addAccount = () => {
+	startGame = (type) => {
+		let screen = type == 'create' ? 'CreateGame' : 'JoinGame';
 		this.setState({loading: true});
 		if(this.state.accountID == '') {
-			return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/addAccount?username=${this.props.navigation.state.params.name}`)
+			return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/addAccount?username=${this.state.username}`)
 				.then(response => response.text())
 				.then(text => {
-					console.log(text)
-					return this.setState({accountID: text});
+					console.log(text);
+					this.setState({accountID: text, showLogo: true, loading: false}, () => {
+						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID})
+					});
 				})
 				.catch(e => {
-					console.log(e)
+					console.log(e);
 					this.setState({loading: false});
 					return e;
 				})
@@ -50,11 +54,14 @@ export default class HomeScreen extends React.Component {
 			return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/updateAccount?username=${this.state.username}&ID=${this.state.accountID}`)
 				.then(response => response.text())
 				.then(text => {
-					console.log(text)
-					return this.setState({accountID: text});
+					console.log(text);
+					this.setState({accountID: text, showLogo: true, loading: false}, () => {
+						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID})
+					});
 				})
 				.catch(e => {
-					console.log(e)
+					console.log(e);
+					this.setState({loading: false});
 					return e;
 				})
 			)
@@ -92,9 +99,7 @@ export default class HomeScreen extends React.Component {
 								style={disabled ? styles.disabledCreateGameButton : styles.createGameButton}
 								disabled={disabled || this.state.loading}
 								onPress={
-									() => {this.addAccount},
-									() => {this.setState({showLogo: true, loading: false})},
-									() => this.props.navigation.navigate('CreateGame', { name: this.state.username, uid: this.state.accountID})
+									() => {this.startGame('create')}
 								}
 							>
 								{this.state.loading
@@ -106,9 +111,7 @@ export default class HomeScreen extends React.Component {
 								style={disabled ? styles.disabledJoinGameButton : styles.joinGameButton}
 								disabled={disabled || this.state.loading}
 								onPress={
-									() => {this.addAccount},
-									() => {this.setState({showLogo: true, loading: false})},
-									() => this.props.navigation.navigate('JoinGame', { name: this.state.username, uid: this.state.accountID})
+									() => {this.startGame('join')}
 								}
 							>
 								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
