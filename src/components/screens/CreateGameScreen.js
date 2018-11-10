@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, TextInput, TouchableOpacity, Image, Dimensions 
 import { Icon } from 'react-native-elements';
 import Slider from "react-native-slider";
 import Modal from "react-native-modal";
-import { MapView, Constants, PROVIDER_GOOGLE } from 'expo';
+import { MapView, Constants, Location, Permissions, PROVIDER_GOOGLE } from 'expo';
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
@@ -17,10 +17,7 @@ export default class CreateGameScreen extends React.Component {
 			gameLength: 15,
 			mapRadius: 50,
 			showMapModal: false,
-			LATLNG: {
-				latitude: 37.78825,
-				longitude: -122.4324,
-			},
+			locationResult: null
 		};
 	}
 
@@ -33,6 +30,22 @@ export default class CreateGameScreen extends React.Component {
 				fontWeight: 'bold',
 			},
 		};
+	};
+
+	componentDidMount() {
+		this._getLocationAsync();
+	}
+
+	_getLocationAsync = async () => {
+		let { status } = await Permissions.askAsync(Permissions.LOCATION);
+		if (status !== 'granted') {
+			this.setState({
+				locationResult: 'Permission to access location was denied',
+			});
+		}
+
+		let location = await Location.getCurrentPositionAsync({});
+		this.setState({ locationResult: JSON.stringify(location) });
 	};
 
 	_toggleModal = () => {
@@ -66,6 +79,16 @@ export default class CreateGameScreen extends React.Component {
 		const disabled = this.state.lobbyName.length == 0;
 		const name = this.props.navigation.state.params.name;
 		const uid = this.props.navigation.state.params.uid;
+		const gameInfo = {
+			sessionName: this.state.lobbyName,
+			uid: this.props.navigation.state.params.uid,
+			time: this.state.gameLength,
+			radius: this.state.radius,
+			LATLNG: {
+				latitude: 37.78825,
+				longitude: -122.4324,
+			},
+		}
 		return (
 			<View style={styles.container}>
 				<View style={{position: 'absolute', top: 0, left: 0, width, height}}>
@@ -73,7 +96,8 @@ export default class CreateGameScreen extends React.Component {
 						source={require('./HomeScreenBackgroundBlurred.jpg')}
 					/>
 				</View>
-				<View style={{flex: 1, backgroundColor: 'transparent', justifyContent: 'center', marginTop: 70}}>
+				<View style={{flex: 1, backgroundColor: 'transparent', justifyContent: 'center', marginTop: 50}}>
+					<Text style={{color: 'white'}}>Your ID is: {uid}</Text>
 					<TextInput style = {styles.input}
 						underlineColorAndroid = "transparent"
 						placeholder = "Lobby name..."
@@ -137,7 +161,8 @@ export default class CreateGameScreen extends React.Component {
 						style={disabled ? styles.disabledCreateButton : styles.createButton}
 						disabled={disabled}
 						onPress={
-							() => this.props.navigation.navigate('CreateGame', { name: this.state.username })
+							console.log(this.state.locationResult)
+							// () => this.props.navigation.navigate('GameLobby', { name: this.state.username })
 						}
 					>
 						<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
