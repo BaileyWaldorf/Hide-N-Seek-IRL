@@ -169,9 +169,10 @@ export default class CreateGameScreen extends React.Component {
 						<View style={{ flex: 1, backgroundColor: '#FFF', borderRadius: 20 }}>
 							<View style={styles.mapContainer}>
 								<MapView
-									style={{flex: 1}}
+									style={{flex: 1, height, overflow: 'hidden'}}
 									provider={PROVIDER_GOOGLE}
 									customMapStyle={mapStyle}
+									minZoomLevel={16}
 									initialRegion={{
 										latitude: location.latitude,
 										longitude: location.longitude,
@@ -217,7 +218,9 @@ const styles = StyleSheet.create({
 	},
 	mapContainer: {
 		flex: 1,
+		height,
 		margin: 10,
+		width: '95%',
 		overflow: 'hidden',
 		borderRadius: 20,
 		shadowOpacity: 0.4,

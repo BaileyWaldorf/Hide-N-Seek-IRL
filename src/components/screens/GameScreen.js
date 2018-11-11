@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 // import { MapView, Constants, Location, Permissions, PROVIDER_GOOGLE } from 'expo';
-import MapView, { Marker, AnimatedRegion, Polyline } from "react-native-maps";
+import MapView, { Marker, AnimatedRegion, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import haversine from "haversine";
 
 const LATITUDE = 29.95539;
@@ -26,6 +26,10 @@ export default class CreateGameScreen extends React.Component {
 		};
 	}
 
+	static navigationOptions = {
+		header: null
+	}
+
 	componentDidMount() {
 		this.watchID = navigator.geolocation.watchPosition(
 			position => {
@@ -38,10 +42,7 @@ export default class CreateGameScreen extends React.Component {
 				};
 				if (Platform.OS === "android") {
 					if (this.marker) {
-						this.marker._component.animateMarkerToCoordinate(
-							newCoordinate,
-							500
-						);
+						coordinate.timing(newCoordinate).start();
 					}
 				} else {
 					coordinate.timing(newCoordinate).start();
@@ -83,6 +84,7 @@ export default class CreateGameScreen extends React.Component {
 		return (
 			<View style={styles.container}>
 				<MapView
+					provider={PROVIDER_GOOGLE}
 					style={styles.map}
 					customMapStyle={mapStyle}
 					showUserLocation
@@ -96,15 +98,16 @@ export default class CreateGameScreen extends React.Component {
 							this.marker = marker;
 						}}
 						coordinate={this.state.coordinate}
+						image={require('../assets/marker.png')}
 					/>
-					<View style={styles.buttonContainer}>
-						<TouchableOpacity style={[styles.bubble, styles.button]}>
-							<Text style={styles.bottomBarContent}>
-								{parseFloat(this.state.distanceTravelled).toFixed(2)} km
-							</Text>
-						</TouchableOpacity>
-					</View>
 				</MapView>
+				<View style={styles.buttonContainer}>
+					<TouchableOpacity style={[styles.bubble, styles.button]}>
+						<Text style={styles.bottomBarContent}>
+							{parseFloat(this.state.distanceTravelled).toFixed(2)} km
+						</Text>
+					</TouchableOpacity>
+				</View>
 			</View>
 		);
 	}
