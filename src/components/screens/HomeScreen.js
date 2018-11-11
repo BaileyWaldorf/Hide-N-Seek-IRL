@@ -34,6 +34,10 @@ export default class HomeScreen extends React.Component {
 
 	startGame = (type) => {
 		let screen = type == 'create' ? 'CreateGame' : 'JoinGame';
+<<<<<<< HEAD
+=======
+		let host = 'create' ? true : false;
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 		this.setState({loading: true});
 		if(this.state.accountID == '') {
 			return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/addAccount?username=${this.state.username}`)
@@ -41,7 +45,11 @@ export default class HomeScreen extends React.Component {
 				.then(text => {
 					console.log(text);
 					this.setState({accountID: text, showLogo: true, loading: false}, () => {
+<<<<<<< HEAD
 						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID})
+=======
+						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID, host: host})
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 					});
 				})
 				.catch(e => {
@@ -56,7 +64,11 @@ export default class HomeScreen extends React.Component {
 				.then(text => {
 					console.log(text);
 					this.setState({accountID: text, showLogo: true, loading: false}, () => {
+<<<<<<< HEAD
 						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID})
+=======
+						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID, host: host})
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 					});
 				})
 				.catch(e => {
@@ -114,7 +126,14 @@ export default class HomeScreen extends React.Component {
 									() => {this.startGame('join')}
 								}
 							>
+<<<<<<< HEAD
 								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
+=======
+								{this.state.loading
+									? <Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>LOADING...</Text>
+									: <Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
+								}
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 							</TouchableOpacity>
 						</View>
 					</View>

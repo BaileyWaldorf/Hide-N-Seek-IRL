@@ -2,32 +2,57 @@ import React from 'react';
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements';
 import Slider from "react-native-slider";
+import Modal from "react-native-modal";
+import { MapView, Constants, Location, Permissions, PROVIDER_GOOGLE } from 'expo';
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 
 export default class CreateGameScreen extends React.Component {
 	constructor(props) {
-		 super(props);
-		 this.state = {
-			 lobbyName: '',
-			 lobbyPassword: '',
-			 selectedHours: 0,
-			 selectedMinutes: 0,
-			 gameLength: 0,
-		 };
+		super(props);
+		this.state = {
+			lobbyName: '',
+			lobbyPassword: '',
+			gameLength: 15,
+			mapRadius: 50,
+			showMapModal: false,
+			locationResult: null,
+			gameReference: null
+		};
 	}
 
 	static navigationOptions = ({navigation}) => {
 		return {
 			headerTransparent: true,
-			title: `Welcome ${navigation.state.params.name}!`,
+			title: `Welcome ${navigation.state.params.name}!	ID: ${navigation.state.params.uid}`,
 			headerTintColor: '#fff',
 			headerTitleStyle: {
 				fontWeight: 'bold',
 			},
 		};
 	};
+
+	componentDidMount() {
+		this._getLocationAsync();
+	}
+
+	_getLocationAsync = async () => {
+		let { status } = await Permissions.askAsync(Permissions.LOCATION);
+		if (status !== 'granted') {
+			this.setState({
+				locationResult: 'Permission to access location was denied',
+			});
+		}
+
+		let location = await Location.getCurrentPositionAsync({});
+		console.log(typeof location);
+		this.setState({ locationResult: location }, () => {console.log(this.state.locationResult)});
+	};
+
+	_toggleModal = () => {
+    	this.setState({ showMapModal: !this.state.showMapModal })
+	}
 
 	handleLobbyNameInput = (name) => {
 		this.setState({ lobbyName: name })
@@ -37,8 +62,42 @@ export default class CreateGameScreen extends React.Component {
 		this.setState({ lobbyPassword: password })
 	}
 
+	createGame = (gameInfo) => {
+		console.log("Creating session...")
+		console.log("radius = ", this.state.radius)
+		var URL = "https://us-central1-hide-n-seek-irl.cloudfunctions.net/createSession"
+		const query = `?sesName=${gameInfo.sessionName}&UID=${gameInfo.uid}&time=${gameInfo.time}&radius=${gameInfo.radius}&lat=${gameInfo.latitude}&long=${gameInfo.longitude}`
+		URL = `${URL}${query}`
+
+		fetch(URL)
+		.then(response => response.text())
+		.then(text => {
+			this.setState({gameReference: text}, () => {
+				console.log(this.state.gameReference)
+				this.props.navigation.navigate("Lobby", {gameName: this.state.lobbyName, gameReference: this.state.gameReference, host: this.props.navigation.state.params.host})
+			});
+		})
+		.catch(err => {
+			console.error(err)
+		})
+	}
+
 	render() {
-		const { selectedHours, selectedMinutes } = this.state;
+		const disabled = this.state.lobbyName.length == 0;
+		const name = this.props.navigation.state.params.name;
+		const uid = this.props.navigation.state.params.uid;
+		const location = {
+			latitude: this.state.locationResult == null ? 37.78825 : this.state.locationResult.coords.latitude,
+			longitude: this.state.locationResult == null ? -122.4324 : this.state.locationResult.coords.longitude,
+		}
+		const gameInfo = {
+			sessionName: this.state.lobbyName,
+			uid: this.props.navigation.state.params.uid,
+			time: this.state.gameLength,
+			radius: this.state.mapRadius,
+			latitude: location.latitude,
+			longitude: location.longitude
+		}
 		return (
 			<View style={styles.container}>
 				<View style={{position: 'absolute', top: 0, left: 0, width, height}}>
@@ -46,21 +105,13 @@ export default class CreateGameScreen extends React.Component {
 						source={require('./HomeScreenBackgroundBlurred.jpg')}
 					/>
 				</View>
-				<View style={{flex: 1, backgroundColor: 'transparent', justifyContent: 'center'}}>
+				<View style={{flex: 1, backgroundColor: 'transparent', justifyContent: 'center', marginTop: 50}}>
 					<TextInput style = {styles.input}
 						underlineColorAndroid = "transparent"
 						placeholder = "Lobby name..."
 						placeholderTextColor = "white"
 						autoCapitalize = "none"
 						onChangeText = {this.handleLobbyNameInput}
-					/>
-					<TextInput style = {styles.input}
-						underlineColorAndroid = "transparent"
-						placeholder = "Lobby password..."
-						placeholderTextColor = "white"
-						autoCapitalize = "none"
-						onChangeText = {this.handleLobbyPasswordInput}
-						secureTextEntry={true}
 					/>
 					<View style={styles.gameOptions}>
 						<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center'}}>
@@ -74,22 +125,85 @@ export default class CreateGameScreen extends React.Component {
 						<Slider
 							value={this.state.gameLength}
 							onValueChange={gameLength => this.setState({ gameLength })}
-							minimumValue={0}
+							minimumValue={5}
 							maximumValue={60}
 							step={5}
 							minimumTrackTintColor='#e89a47'
 							thumbStyle={styles.sliderThumb}
 							animateTransitions={true}
 						/>
-						<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center', marginTop: 20}}>
+						<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center', marginTop: 30}}>
+							<Icon
+								name='md-locate'
+								type='ionicon'
+								color='white'
+							/>
+							<Text style={{color: 'white', fontSize: 17, textAlign: 'center', marginLeft: 8}}>Map Limit: {this.state.mapRadius} meters</Text>
+						</View>
+						<View style={{alignItems: 'center'}}>
+							<TouchableOpacity
+								style={styles.selectRadiusButton}
+								onPress={this._toggleModal}
+							>
+								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>SELECT RADIUS</Text>
+							</TouchableOpacity>
+						</View>
+						{/* <View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center', marginTop: 30}}>
 							<Icon
 								name='md-person-add'
 								type='ionicon'
 								color='white'
 							/>
 							<Text style={{color: 'white', fontSize: 17, textAlign: 'center', marginLeft: 8}}>Add Players</Text>
-						</View>
+						</View> */}
 					</View>
+					<TouchableOpacity
+						style={disabled ? styles.disabledCreateButton : styles.createButton}
+						disabled={disabled}
+						onPress={() => this.createGame(gameInfo)}
+					>
+						<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
+					</TouchableOpacity>
+					<Modal style ={{flex: 1, marginTop: 80, marginBottom: 80, marginLeft:40, marginRight: 40, borderRadius: 20}}
+						isVisible={this.state.showMapModal}>
+						<View style={{ flex: 1, backgroundColor: '#FFF', borderRadius: 20 }}>
+							<View style={styles.mapContainer}>
+								<MapView
+									style={{flex: 1}}
+									provider={PROVIDER_GOOGLE}
+									customMapStyle={mapStyle}
+									initialRegion={{
+										latitude: location.latitude,
+										longitude: location.longitude,
+										latitudeDelta: 0.015,
+										longitudeDelta: 0.0121,
+									}}
+								>
+									<MapView.Circle
+										center = { location }
+										radius = { this.state.mapRadius }
+										strokeWidth = { 1 }
+										strokeColor = { '#1a66ff' }
+										fillColor = { 'rgba(230,238,255,0.5)' }
+									/>
+								</MapView>
+							</View>
+							<View style={{alignItems: 'center'}}>
+								<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center'}}>
+									<TouchableOpacity style={{marginRight: 5}} onPress={() => {this.setState({mapRadius: this.state.mapRadius - 5})}}>
+										<Text style={{color: 'green', fontWeight: 'bold', fontSize: 55}}>-</Text>
+									</TouchableOpacity>
+									<Text style={{fontSize: 25}}>{this.state.mapRadius} meters</Text>
+									<TouchableOpacity style={{marginLeft: 5}} onPress={() => {this.setState({mapRadius: this.state.mapRadius + 5})}}>
+										<Text style={{color: 'green', fontWeight: 'bold', fontSize: 55}}>+</Text>
+									</TouchableOpacity>
+								</View>
+								<TouchableOpacity style={styles.doneButton} onPress={this._toggleModal}>
+									<Text style={{color: 'white', fontWeight: 'bold'}}>DONE</Text>
+								</TouchableOpacity>
+							</View>
+						</View>
+					</Modal>
 				</View>
 			</View>
 		);
@@ -100,6 +214,15 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		alignItems: "center",
+	},
+	mapContainer: {
+		flex: 1,
+		margin: 10,
+		overflow: 'hidden',
+		borderRadius: 20,
+		shadowOpacity: 0.4,
+		shadowRadius: 1,
+		shadowOffset: {height: 2, width: 0}
 	},
 	header: {
 		flex: .14,
@@ -129,7 +252,7 @@ const styles = StyleSheet.create({
 		fontSize: 17
 	},
 	gameOptions: {
-		height: 300,
+		height: 250,
 		width: 350,
 		padding: 20,
 		backgroundColor: 'rgba(16, 59, 89, 0.4)',
@@ -150,5 +273,112 @@ const styles = StyleSheet.create({
 		shadowColor: 'black',
 		shadowOpacity: 0.8,
 		shadowRadius: 10,
-	}
+	},
+	selectRadiusButton: {
+		width: 200,
+		marginTop: 20,
+		padding: 10,
+		backgroundColor: 'rgba(0, 0, 0, 0.1)',
+		borderRadius: 8,
+		borderWidth: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderColor: 'rgba(0, 0, 0, 0.5)'
+	},
+	doneButton: {
+		height: 44,
+		width: 100,
+		marginBottom: 20,
+		backgroundColor: '#4bb53a',
+		borderRadius: 4,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderBottomWidth: 4,
+		borderColor: '#2f7723'
+	},
+	createButton: {
+		paddingLeft: 24,
+		paddingRight: 24,
+		paddingTop: 12,
+		paddingBottom: 12,
+		margin: 10,
+		marginTop: 20,
+		marginBottom: 15,
+		backgroundColor: '#4bb53a',
+		borderRadius: 8,
+		borderWidth: 5,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderColor: 'rgba(0, 0, 0, 0.5)'
+	},
+	disabledCreateButton: {
+		paddingLeft: 24,
+		paddingRight: 24,
+		paddingTop: 12,
+		paddingBottom: 12,
+		margin: 10,
+		marginTop: 20,
+		marginBottom: 15,
+		backgroundColor: 'rgba(130, 188, 120, 0.5)',
+		borderRadius: 8,
+		borderWidth: 5,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderColor: 'rgba(0, 0, 0, 0.5)'
+	},
 });
+
+const mapStyle = [
+	{
+		"featureType": "water",
+		"stylers": [
+			{ "visibility": "on" },
+			{ "color": "#1A87D6" }
+		]
+	},
+	{
+		"featureType": "landscape",
+		"stylers": [
+			{ "color": "#AFFFA0" }
+		]
+	},
+	{
+		"featureType": "road",
+		"elementType": "geometry",
+		"stylers": [
+			{ "color": "#59A499" }
+		]
+	},
+	{
+		"featureType": "poi",
+		"stylers": [
+			{ "color": "#EAFFE5" }
+		]
+	},
+	{
+		"featureType": "road",
+		"elementType": "geometry.stroke",
+		"stylers": [
+			{ "color": "#F0FF8D" },
+			{ "weight": 2.2 }
+		]
+	},
+	{
+		"featureType": "poi.business",
+		"stylers": [
+			{ "visibility": "off" }
+		]
+	},
+	{
+		"featureType": "poi.government",
+		"stylers": [
+			{ "visibility": "off" }
+		]
+	},
+	{
+		"featureType": "administrative.locality",
+		"stylers": [
+			{ "visibility": "off" }
+		]
+	}
+]

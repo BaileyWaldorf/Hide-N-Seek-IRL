@@ -1,5 +1,9 @@
 import React from 'react';
+<<<<<<< HEAD
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, Dimensions, Platform, Image, KeyboardAvoidingView } from 'react-native';
+=======
+import { Text, View, StyleSheet, TextInput, TouchableOpacity, Dimensions, Platform, Image, KeyboardAvoidingView, Alert } from 'react-native';
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 import { SafeAreaView, createStackNavigator } from 'react-navigation';
 import { Font } from 'expo';
 
@@ -9,6 +13,7 @@ const height = Dimensions.get('window').height;
 export default class JoinGameScreen extends React.Component {
 	constructor(props) {
 		super(props);
+<<<<<<< HEAD
 			this.state = {
 			gamename: "",
 			showLogo: false,
@@ -66,11 +71,68 @@ export default class JoinGameScreen extends React.Component {
 				})
 			)
 		}
+=======
+		this.state = {
+			gameName: "",
+			loading: false,
+			gameReference: "",
+			hostID: ""
+		};
+	}
+
+	static navigationOptions = ({navigation}) => {
+		return {
+			headerTransparent: true,
+			title: `Welcome ${navigation.state.params.name}!	ID: ${navigation.state.params.uid}`,
+			headerTintColor: '#fff',
+			headerTitleStyle: {
+				fontWeight: 'bold',
+			},
+		};
+	};
+
+	handleHostIDInput = (id) => {
+		this.setState({ hostID: id })
+	}
+
+	joinGame = (join) => {
+		console.log("join game button clicked");
+		this.setState({loading: true});
+
+		return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/joinSession?ID=${this.props.navigation.state.params.uid}&session=${this.state.hostID}`)
+			.then(response => response.json())
+			.then(response => {
+				console.log("game data =", response);
+				this.setState({gameReference: response.session, gameName: response.name, loading: false}, () => {
+					this.props.navigation.navigate("Lobby", {
+						gameID: this.props.navigation.state.params.uid,
+						gameReference: this.state.gameReference,
+						gameName: this.state.gameName,
+						host: this.props.navigation.state.params.host
+					})
+				});
+			})
+			.catch(e => {
+				console.log(e);
+				Alert.alert(
+					'Game Not Joinable', 'The game you are trying to connect to does not exist.',
+					[{text: 'OK', onPress: () => console.log('OK Pressed')}],
+					{ cancelable: false }
+				)
+				this.setState({loading: false});
+				return e;
+			})
+		)
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 	}
 
 	render() {
 		const offset = Platform.OS === 'ios' ? 0 : -40;
+<<<<<<< HEAD
 		const disabled = this.state.gamename.length == 0;
+=======
+		const disabled = this.state.hostID.length == 0;
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 		return (
 			<View style={styles.container}>
 				<KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={offset} behavior="padding" enabled>
@@ -79,6 +141,7 @@ export default class JoinGameScreen extends React.Component {
 							style={{flex: 1, width, height}}
 							source={require('./HomeScreenBackground2.jpg')}
 						/>
+<<<<<<< HEAD
 						{this.state.showLogo ? (
 							<Image
 								style={styles.logo}
@@ -93,16 +156,33 @@ export default class JoinGameScreen extends React.Component {
 							onChangeText = {this.handlegamenameInput}
 							onFocus={() => {this.setState({showLogo: false})}}
 							onEndEditing={() => {this.setState({showLogo: false})}}
+=======
+						<TextInput style = {styles.input}
+							underlineColorAndroid = "transparent"
+							placeholder = "Enter The Host's ID..."
+							placeholderTextColor = "white"
+							autoCapitalize = "none"
+							onChangeText = {this.handleHostIDInput}
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 						/>
 						<View style={styles.buttonContainer}>
 							<TouchableOpacity
 								style={disabled ? styles.disabledJoinGameButton : styles.joinGameButton}
 								disabled={disabled || this.state.loading}
+<<<<<<< HEAD
 								onPress={
 									() => {this.startGame('join')}
 								}
 							>
 								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
+=======
+								onPress={() => this.joinGame('join')}
+							>
+								{this.state.loading
+									? <Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>LOADING...</Text>
+									: <Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN</Text>
+								}
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 							</TouchableOpacity>
 						</View>
 					</View>
@@ -116,7 +196,12 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		alignItems: "center",
+<<<<<<< HEAD
 		backgroundColor: '#444'
+=======
+		backgroundColor: '#444',
+		justifyContent: 'center'
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 	},
 	header: {
 		flex: 1,
@@ -157,6 +242,7 @@ const styles = StyleSheet.create({
 		width, position: 'absolute',
 		bottom: 40
 	},
+<<<<<<< HEAD
 	button: {
 		width: 40,
 		height: 40,
@@ -191,6 +277,8 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		borderColor: 'rgba(0, 0, 0, 0.5)'
 	},
+=======
+>>>>>>> 14af131da670a9dd0a10df567b909f262eeea7bf
 	joinGameButton: {
 		paddingLeft: 24,
 		paddingRight: 24,
