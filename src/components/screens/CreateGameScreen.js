@@ -17,14 +17,15 @@ export default class CreateGameScreen extends React.Component {
 			gameLength: 15,
 			mapRadius: 50,
 			showMapModal: false,
-			locationResult: null
+			locationResult: null,
+			gameReference: null
 		};
 	}
 
 	static navigationOptions = ({navigation}) => {
 		return {
 			headerTransparent: true,
-			title: `Welcome ${navigation.state.params.name}!`,
+			title: `Welcome ${navigation.state.params.name}!	ID: ${navigation.state.params.uid}`,
 			headerTintColor: '#fff',
 			headerTitleStyle: {
 				fontWeight: 'bold',
@@ -45,7 +46,8 @@ export default class CreateGameScreen extends React.Component {
 		}
 
 		let location = await Location.getCurrentPositionAsync({});
-		this.setState({ locationResult: JSON.stringify(location) });
+		console.log(typeof location);
+		this.setState({ locationResult: location }, () => {console.log(this.state.locationResult)});
 	};
 
 	_toggleModal = () => {
@@ -60,15 +62,20 @@ export default class CreateGameScreen extends React.Component {
 		this.setState({ lobbyPassword: password })
 	}
 
-	testFunction = () => {
-		var URL = "https://us-central1-hide-n-seek-irl.cloudfunctions.net/helloWorld"
-		const query = "Bailey"
-		URL = `${URL}?name=${query}`
+	createGame = (gameInfo) => {
+		console.log("Creating session...")
+		console.log("radius = ", this.state.radius)
+		var URL = "https://us-central1-hide-n-seek-irl.cloudfunctions.net/createSession"
+		const query = `?sesName=${gameInfo.sessionName}&UID=${gameInfo.uid}&time=${gameInfo.time}&radius=${gameInfo.radius}&lat=${gameInfo.latitude}&long=${gameInfo.longitude}`
+		URL = `${URL}${query}`
 
 		fetch(URL)
-		.then(response => response.json())
-		.then(response => {
-			console.log(response.say)
+		.then(response => response.text())
+		.then(text => {
+			this.setState({gameReference: text}, () => {
+				console.log(this.state.gameReference)
+				this.props.navigation.navigate("Lobby", {gameName: this.state.lobbyName, gameReference: this.state.gameReference, host: this.props.navigation.state.params.host})
+			});
 		})
 		.catch(err => {
 			console.error(err)
@@ -79,15 +86,17 @@ export default class CreateGameScreen extends React.Component {
 		const disabled = this.state.lobbyName.length == 0;
 		const name = this.props.navigation.state.params.name;
 		const uid = this.props.navigation.state.params.uid;
+		const location = {
+			latitude: this.state.locationResult == null ? 37.78825 : this.state.locationResult.coords.latitude,
+			longitude: this.state.locationResult == null ? -122.4324 : this.state.locationResult.coords.longitude,
+		}
 		const gameInfo = {
 			sessionName: this.state.lobbyName,
 			uid: this.props.navigation.state.params.uid,
 			time: this.state.gameLength,
-			radius: this.state.radius,
-			LATLNG: {
-				latitude: 37.78825,
-				longitude: -122.4324,
-			},
+			radius: this.state.mapRadius,
+			latitude: location.latitude,
+			longitude: location.longitude
 		}
 		return (
 			<View style={styles.container}>
@@ -97,21 +106,12 @@ export default class CreateGameScreen extends React.Component {
 					/>
 				</View>
 				<View style={{flex: 1, backgroundColor: 'transparent', justifyContent: 'center', marginTop: 50}}>
-					<Text style={{color: 'white'}}>Your ID is: {uid}</Text>
 					<TextInput style = {styles.input}
 						underlineColorAndroid = "transparent"
 						placeholder = "Lobby name..."
 						placeholderTextColor = "white"
 						autoCapitalize = "none"
 						onChangeText = {this.handleLobbyNameInput}
-					/>
-					<TextInput style = {styles.input}
-						underlineColorAndroid = "transparent"
-						placeholder = "Lobby password... (optional)"
-						placeholderTextColor = "white"
-						autoCapitalize = "none"
-						onChangeText = {this.handleLobbyPasswordInput}
-						secureTextEntry={true}
 					/>
 					<View style={styles.gameOptions}>
 						<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center'}}>
@@ -160,10 +160,7 @@ export default class CreateGameScreen extends React.Component {
 					<TouchableOpacity
 						style={disabled ? styles.disabledCreateButton : styles.createButton}
 						disabled={disabled}
-						onPress={
-							console.log(this.state.locationResult)
-							// () => this.props.navigation.navigate('GameLobby', { name: this.state.username })
-						}
+						onPress={() => this.createGame(gameInfo)}
 					>
 						<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>CREATE GAME</Text>
 					</TouchableOpacity>
@@ -175,16 +172,15 @@ export default class CreateGameScreen extends React.Component {
 									style={{flex: 1}}
 									provider={PROVIDER_GOOGLE}
 									customMapStyle={mapStyle}
-									minZoomLevel={17}
 									initialRegion={{
-										latitude: 37.78825,
-										longitude: -122.4324,
+										latitude: location.latitude,
+										longitude: location.longitude,
 										latitudeDelta: 0.015,
 										longitudeDelta: 0.0121,
 									}}
 								>
 									<MapView.Circle
-										center = { this.state.LATLNG }
+										center = { location }
 										radius = { this.state.mapRadius }
 										strokeWidth = { 1 }
 										strokeColor = { '#1a66ff' }
@@ -194,11 +190,11 @@ export default class CreateGameScreen extends React.Component {
 							</View>
 							<View style={{alignItems: 'center'}}>
 								<View style={{flexDirection:'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'center'}}>
-									<TouchableOpacity style={{marginRight: 5}} onPress={() => {this.setState({mapRadius: this.state.mapRadius - 1})}}>
+									<TouchableOpacity style={{marginRight: 5}} onPress={() => {this.setState({mapRadius: this.state.mapRadius - 5})}}>
 										<Text style={{color: 'green', fontWeight: 'bold', fontSize: 55}}>-</Text>
 									</TouchableOpacity>
 									<Text style={{fontSize: 25}}>{this.state.mapRadius} meters</Text>
-									<TouchableOpacity style={{marginLeft: 5}} onPress={() => {this.setState({mapRadius: this.state.mapRadius + 1})}}>
+									<TouchableOpacity style={{marginLeft: 5}} onPress={() => {this.setState({mapRadius: this.state.mapRadius + 5})}}>
 										<Text style={{color: 'green', fontWeight: 'bold', fontSize: 55}}>+</Text>
 									</TouchableOpacity>
 								</View>

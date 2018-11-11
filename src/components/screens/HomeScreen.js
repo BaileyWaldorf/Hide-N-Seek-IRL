@@ -34,6 +34,7 @@ export default class HomeScreen extends React.Component {
 
 	startGame = (type) => {
 		let screen = type == 'create' ? 'CreateGame' : 'JoinGame';
+		let host = 'create' ? true : false;
 		this.setState({loading: true});
 		if(this.state.accountID == '') {
 			return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/addAccount?username=${this.state.username}`)
@@ -41,7 +42,7 @@ export default class HomeScreen extends React.Component {
 				.then(text => {
 					console.log(text);
 					this.setState({accountID: text, showLogo: true, loading: false}, () => {
-						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID})
+						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID, host: host})
 					});
 				})
 				.catch(e => {
@@ -56,7 +57,7 @@ export default class HomeScreen extends React.Component {
 				.then(text => {
 					console.log(text);
 					this.setState({accountID: text, showLogo: true, loading: false}, () => {
-						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID})
+						this.props.navigation.navigate(screen, { name: this.state.username, uid: this.state.accountID, host: host})
 					});
 				})
 				.catch(e => {
@@ -114,7 +115,10 @@ export default class HomeScreen extends React.Component {
 									() => {this.startGame('join')}
 								}
 							>
-								<Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
+								{this.state.loading
+									? <Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>LOADING...</Text>
+									: <Text style={{color: 'white', fontWeight: 'bold', fontSize: 17}}>JOIN GAME</Text>
+								}
 							</TouchableOpacity>
 						</View>
 					</View>
