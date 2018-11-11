@@ -2,6 +2,18 @@ import React from 'react';
 import { Text, View, StyleSheet, TextInput, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Icon } from 'react-native-elements';
 import Slider from "react-native-slider";
+import Firebase from "firebase";
+
+var config = {
+    apiKey: "AIzaSyAKDJGxE31RnypjNu6SbiHW8KAY6WviEQg",
+    authDomain: "hide-n-seek-irl.firebaseapp.com",
+    databaseURL: "https://hide-n-seek-irl.firebaseio.com/",
+    projectId: "hide-n-seek-irl",
+    storageBucket: "hide-n-seek-irl.appspot.com",
+    messagingSenderId: "320712075057"
+  };
+	
+Firebase.initializeApp(config);
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
@@ -21,7 +33,7 @@ export default class LobbyScreen extends React.Component {
 	static navigationOptions = ({navigation}) => {
 		return {
 			headerTransparent: true,
-			title: `Welcome to ${navigation.state.params.Gamename}`,
+			title: `Welcome to ${navigation.state.params.sesId}`,
 			headerTintColor: '#fff',
 			headerTitleStyle: {
 				fontWeight: 'bold',
