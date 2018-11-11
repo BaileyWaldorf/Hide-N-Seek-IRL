@@ -107,7 +107,7 @@ exports.nightlyCleanup = functions.https.onRequest((req, res) => {
 })
 
 
-exports.craeteSession = functions.https.onRequest((req, res) => {
+exports.createSession = functions.https.onRequest((req, res) => {
   var sesName = req.query.sesName;
   var uid = req.query.UID;
   var time = req.query.time;
@@ -244,12 +244,16 @@ exports.joinSession = functions.https.onRequest((req, res) => {
     // promises[1] := colRef
     var colRef = promises[1]
     // add the player to the Hiders collection in the game
-    colRef.add({ "username" : username, "UID" : id })
-    // return colRef parent
-    return colRef.parent
-  }).then(docRef => {
+    colRef.add({ "username" : username, "UID" : id, "lat" : null, "long" : null, "found" : false })
+    var p1 = colRef.parent
+    var p2 = db.getAll(p1)
+    return Promise.all([p1, p2])
+  }).then(promises => {
     // End the https call by sending docRef.id
-    return res.status(200).send(docRef.id)
+    var docRef = promises[0]
+    var docs = promises[1]
+    var name = docs[0].get('name')
+    return res.status(200).send({ 'session' : docRef.id, 'name' : name })
   }).catch(err => {
     console.error(err);
     res.status(500).send(err);
