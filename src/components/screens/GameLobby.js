@@ -14,16 +14,9 @@ export default class GameLobby extends React.Component {
 		 };
 	}
 
-	static navigationOptions = ({navigation}) => {
-		return {
-			headerTransparent: true,
-			title: `Game: ${navigation.state.params.gameName}`,
-			headerTintColor: '#fff',
-			headerTitleStyle: {
-				fontWeight: 'bold',
-			},
-		};
-	};
+	static navigationOptions = {
+		header: null
+	}
 
 	componentDidMount() {
 		const firebase = require('@firebase/app').default;

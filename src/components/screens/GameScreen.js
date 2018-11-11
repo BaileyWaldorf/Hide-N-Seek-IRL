@@ -1,40 +1,79 @@
 import React from 'react';
-import { Text, View, StyleSheet, TextInput, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { Icon } from 'react-native-elements';
-import Slider from "react-native-slider";
-import Modal from "react-native-modal";
-import { MapView, Constants, Location, Permissions, PROVIDER_GOOGLE } from 'expo';
+import { Text, View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+// import { MapView, Constants, Location, Permissions, PROVIDER_GOOGLE } from 'expo';
+import MapView, { Marker, AnimatedRegion, Polyline } from "react-native-maps";
+import haversine from "haversine";
 
-const width = Dimensions.get('window').width;
-const height = Dimensions.get('window').height;
+const LATITUDE = 29.95539;
+const LONGITUDE = 78.07513;
+const LATITUDE_DELTA = 0.009;
+const LONGITUDE_DELTA = 0.009;
 
 export default class CreateGameScreen extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
 			locationResult: null,
+			latitude: LATITUDE,
+			longitude: LONGITUDE,
+			routeCoordinates: [],
+			distanceTravelled: 0,
+			prevLatLng: {},
+			coordinate: new AnimatedRegion({
+				latitude: LATITUDE,
+				longitude: LONGITUDE
+			})
 		};
 	}
 
-	static navigationOptions = {
-		header: null
-	}
-
 	componentDidMount() {
-		this._getLocationAsync();
+		this.watchID = navigator.geolocation.watchPosition(
+			position => {
+				const { coordinate, routeCoordinates, distanceTravelled } = this.state;
+				const { latitude, longitude } = position.coords;
+
+				const newCoordinate = {
+					latitude,
+					longitude
+				};
+				if (Platform.OS === "android") {
+					if (this.marker) {
+						this.marker._component.animateMarkerToCoordinate(
+							newCoordinate,
+							500
+						);
+					}
+				} else {
+					coordinate.timing(newCoordinate).start();
+				}
+				this.setState({
+					latitude,
+					longitude,
+					routeCoordinates: routeCoordinates.concat([newCoordinate]),
+					distanceTravelled: distanceTravelled + this.calcDistance(newCoordinate),
+					prevLatLng: newCoordinate
+				}, () => {console.log("state =" , this.state)});
+			},
+			error => console.log(error),
+			{ enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+		);
 	}
 
-	_getLocationAsync = async () => {
-		let { status } = await Permissions.askAsync(Permissions.LOCATION);
-		if (status !== 'granted') {
-			this.setState({
-				locationResult: 'Permission to access location was denied',
-			});
-		}
+	componentWillUnmount() {
+		navigator.geolocation.clearWatch(this.watchID);
+	}
 
-		let location = await Location.getCurrentPositionAsync({});
-		this.setState({ locationResult: location }, () => {console.log(this.state.locationResult)});
+	calcDistance = newLatLng => {
+		const { prevLatLng } = this.state;
+		return haversine(prevLatLng, newLatLng) || 0;
 	};
+
+	getMapRegion = () => ({
+		latitude: this.state.latitude,
+		longitude: this.state.longitude,
+		latitudeDelta: LATITUDE_DELTA,
+		longitudeDelta: LONGITUDE_DELTA
+	});
 
 	render() {
 		const location = {
@@ -43,27 +82,29 @@ export default class CreateGameScreen extends React.Component {
 		}
 		return (
 			<View style={styles.container}>
-				<View style={styles.mapContainer}>
-					<MapView
-						style={{flex: 1}}
-						provider={PROVIDER_GOOGLE}
-						customMapStyle={mapStyle}
-						initialRegion={{
-							latitude: location.latitude,
-							longitude: location.longitude,
-							latitudeDelta: 0.015,
-							longitudeDelta: 0.0121,
+				<MapView
+					style={styles.map}
+					customMapStyle={mapStyle}
+					showUserLocation
+					followUserLocation
+					loadingEnabled
+					region={this.getMapRegion()}
+				>
+					<Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />
+					<Marker.Animated
+						ref={marker => {
+							this.marker = marker;
 						}}
-					>
-						<MapView.Circle
-							center = { location }
-							radius = { this.props.navigation.state.params.gameInfo.radius }
-							strokeWidth = { 1 }
-							strokeColor = { '#1a66ff' }
-							fillColor = { 'rgba(230,238,255,0.5)' }
-						/>
-					</MapView>
-				</View>
+						coordinate={this.state.coordinate}
+					/>
+					<View style={styles.buttonContainer}>
+						<TouchableOpacity style={[styles.bubble, styles.button]}>
+							<Text style={styles.bottomBarContent}>
+								{parseFloat(this.state.distanceTravelled).toFixed(2)} km
+							</Text>
+						</TouchableOpacity>
+					</View>
+				</MapView>
 			</View>
 		);
 	}
@@ -71,19 +112,30 @@ export default class CreateGameScreen extends React.Component {
 
 const styles = StyleSheet.create({
 	container: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
 		flex: 1,
 		alignItems: "center",
-		justifyContent: 'center'
+		justifyContent: 'flex-end'
 	},
-	mapContainer: {
-		flex: 1,
-		margin: 10,
-		overflow: 'hidden',
-		borderRadius: 20,
-		shadowOpacity: 0.4,
-		shadowRadius: 1,
-		shadowOffset: {height: 2, width: 0}
-	}
+	buttonContainer: {
+		flexDirection:'row',
+		flexWrap:'wrap',
+		alignItems: 'center',
+		justifyContent: 'center',
+		position: 'absolute',
+		bottom: 40
+	},
+	map: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    }
 });
 
 const mapStyle = [
