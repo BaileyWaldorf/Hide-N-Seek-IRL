@@ -6,11 +6,15 @@ import { Constants } from 'expo';
 import HomeScreen from './src/components/screens/HomeScreen';
 import CreateGameScreen from './src/components/screens/CreateGameScreen';
 import JoinGameScreen from './src/components/screens/JoinGameScreen';
+import GameLobby from './src/components/screens/GameLobby';
+import GameScreen from './src/components/screens/GameScreen';
 
 const HideNSeek = createStackNavigator({
 	Home: {screen: HomeScreen},
 	CreateGame: {screen: CreateGameScreen},
-	JoinGame: {screen: JoinGameScreen}
+	JoinGame: {screen: JoinGameScreen},
+	Lobby: {screen: GameLobby},
+	Game: {screen: GameScreen}
 }, {
 	initialRouteName: 'Home',
 })
