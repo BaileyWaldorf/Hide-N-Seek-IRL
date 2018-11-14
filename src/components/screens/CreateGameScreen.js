@@ -100,8 +100,8 @@ export default class CreateGameScreen extends React.Component {
 		}
 		return (
 			<View style={styles.container}>
-				<View style={{position: 'absolute', top: 0, left: 0, width, height}}>
-					<Image style={{flex: 1, resizeMode: 'stretch'}}
+				<View style={{position: 'absolute', top: 0, left: 0, bottom: 0, width, height}}>
+					<Image style={{flex: 1, width, height, resizeMode: 'cover'}}
 						source={require('./HomeScreenBackgroundBlurred.jpg')}
 					/>
 				</View>

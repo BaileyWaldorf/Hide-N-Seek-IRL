@@ -37,14 +37,18 @@ export default class JoinGameScreen extends React.Component {
 		this.setState({loading: true});
 
 		return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/joinSession?ID=${this.props.navigation.state.params.uid}&session=${this.state.hostID}`)
-			.then(response => response.json())
+			.then(response => response.text())
 			.then(response => {
+				console.log('hostID =', this.state.hostID);
 				console.log("game data =", response);
-				this.setState({gameReference: response.session, gameName: response.name, loading: false}, () => {
+				if(response == "{}") {
+					return Promise.reject()
+				}
+				this.setState({gameReference: response, loading: false}, () => {
+					console.log('gameReference:', this.state.gameReference);
 					this.props.navigation.navigate("Lobby", {
 						gameID: this.props.navigation.state.params.uid,
 						gameReference: this.state.gameReference,
-						gameName: this.state.gameName,
 						host: this.props.navigation.state.params.host
 					})
 				});
@@ -70,7 +74,7 @@ export default class JoinGameScreen extends React.Component {
 				<KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={offset} behavior="padding" enabled>
 					<View style={styles.header}>
 						<Image
-							style={{flex: 1, width, height}}
+							style={{flex: 1, width, height, resizeMode: 'cover'}}
 							source={require('./HomeScreenBackground2.jpg')}
 						/>
 						<TextInput style = {styles.input}

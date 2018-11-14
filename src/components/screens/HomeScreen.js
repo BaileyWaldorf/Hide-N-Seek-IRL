@@ -34,7 +34,7 @@ export default class HomeScreen extends React.Component {
 
 	startGame = (type) => {
 		let screen = type == 'create' ? 'CreateGame' : 'JoinGame';
-		let host = 'create' ? true : false;
+		let host = type == 'create' ? true : false;
 		this.setState({loading: true});
 		if(this.state.accountID == '') {
 			return(fetch(`https://us-central1-hide-n-seek-irl.cloudfunctions.net/addAccount?username=${this.state.username}`)
@@ -77,14 +77,14 @@ export default class HomeScreen extends React.Component {
 				<KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={offset} behavior="padding" enabled>
 					<View style={styles.header}>
 						<Image
-							style={{flex: 1, width, height}}
+							style={{flex: 1, width, height, resizeMode: 'cover'}}
 							source={require('./HomeScreenBackground2.jpg')}
 						/>
 						{this.state.showLogo ? (
-							<Image
-								style={styles.logo}
-								source={require('./Logo.png')}
-							/>
+								<Image
+									style={styles.logo}
+									source={require('./Logo.png')}
+								/>
 						) : null }
 						<TextInput style = {styles.input}
 							underlineColorAndroid = "transparent"
@@ -146,7 +146,8 @@ const styles = StyleSheet.create({
 		top: 35,
 		alignItems: 'center',
 		width: '100%',
-		height: '18%'
+		height: '18%',
+		resizeMode: 'contain'
 	},
 	input: {
 		position: 'absolute',

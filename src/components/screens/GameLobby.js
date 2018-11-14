@@ -61,7 +61,7 @@ export default class GameLobby extends React.Component {
 			return e;
 		})
 
-		setInterval(() => {
+		this.interval = setInterval(() => {
 			console.log("retrieving hiders... and checking if game started");
 
 			gameReference.get()
@@ -84,15 +84,18 @@ export default class GameLobby extends React.Component {
 		}, 1000);
 	}
 
+	componentWillUnmount() {
+		clearInterval(this.interval);
+	}
+
 	startGame = (start) => {
 		console.log("button clicked")
 
 		let gameRef = `Game Sessions/${this.props.navigation.state.params.gameReference}`;
 		var gameReference = firestore.doc(gameRef);
 
-		gameReference.set({started: true})
+		gameReference.update({started: true})
 		.then(res => {
-			console.log(`Document written at ${res.updateTime}`);
 			this.props.navigation.navigate("Game", {gameInfo: this.state.gameInfo})
 		})
 		.catch(e => {
@@ -110,7 +113,7 @@ export default class GameLobby extends React.Component {
 		return (
 			<View style={styles.container}>
 				<View style={{position: 'absolute', top: 0, left: 0, width, height}}>
-					<Image style={{flex: 1, resizeMode: 'stretch'}}
+					<Image style={{flex: 1, width, height, resizeMode: 'cover'}}
 						source={require('./HomeScreenBackgroundBlurred.jpg')}
 					/>
 				</View>
@@ -234,7 +237,7 @@ const styles = StyleSheet.create({
 	hidersContainer: {
 		height: 250,
 		width: 350,
-		padding: 20,
+		padding: 10,
 		backgroundColor: 'rgba(16, 59, 89, 0.4)',
 		alignItems: 'center',
 		borderRadius: 10,

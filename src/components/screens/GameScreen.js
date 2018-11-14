@@ -1,18 +1,19 @@
 import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-// import { MapView, Constants, Location, Permissions, PROVIDER_GOOGLE } from 'expo';
+// import  MapView, { Marker, AnimatedRegion, Polyline, PROVIDER_GOOGLE } from 'expo';
 import MapView, { Marker, AnimatedRegion, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import haversine from "haversine";
 
 const LATITUDE = 29.95539;
 const LONGITUDE = 78.07513;
-const LATITUDE_DELTA = 0.009;
-const LONGITUDE_DELTA = 0.009;
+const LATITUDE_DELTA = 0.001;
+const LONGITUDE_DELTA = 0.001;
 
 export default class CreateGameScreen extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
+			timeLeft: parseInt(this.props.navigation.state.params.gameInfo.time, 10) * 60,
 			locationResult: null,
 			latitude: LATITUDE,
 			longitude: LONGITUDE,
@@ -31,6 +32,18 @@ export default class CreateGameScreen extends React.Component {
 	}
 
 	componentDidMount() {
+		console.log("time =", this.props.navigation.state.params.gameInfo.time);
+
+		this.interval = setInterval(() => {
+			if(this.state.timeLeft > 0) {
+				this.setState(prevState => ({
+					timeLeft: prevState.timeLeft - 1
+				}))
+			} else {
+				clearInterval(this.interval)
+			}
+		}, 1000)
+
 		this.watchID = navigator.geolocation.watchPosition(
 			position => {
 				const { coordinate, routeCoordinates, distanceTravelled } = this.state;
@@ -44,6 +57,7 @@ export default class CreateGameScreen extends React.Component {
 					if (this.marker) {
 						coordinate.timing(newCoordinate).start();
 					}
+					coordinate.timing(newCoordinate).start();
 				} else {
 					coordinate.timing(newCoordinate).start();
 				}
@@ -56,12 +70,19 @@ export default class CreateGameScreen extends React.Component {
 				}, () => {console.log("state =" , this.state)});
 			},
 			error => console.log(error),
-			{ enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+			{ enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
 		);
 	}
 
 	componentWillUnmount() {
+		clearInterval(this.interval);
 		navigator.geolocation.clearWatch(this.watchID);
+	}
+
+	secondsToMMSS(seconds) {
+		let min = Math.floor(seconds / 60);
+		let sec = seconds - (min * 60);
+		return `${('0' + min).slice(-2)}:${('0' + sec).slice(-2)}`;
 	}
 
 	calcDistance = newLatLng => {
@@ -69,18 +90,27 @@ export default class CreateGameScreen extends React.Component {
 		return haversine(prevLatLng, newLatLng) || 0;
 	};
 
-	getMapRegion = () => ({
-		latitude: this.state.latitude,
-		longitude: this.state.longitude,
-		latitudeDelta: LATITUDE_DELTA,
-		longitudeDelta: LONGITUDE_DELTA
-	});
+	getInitialRegion = () => {
+		setTimeout(() => {
+			getMapRegion = () => ({
+				latitude: this.state.latitude,
+				longitude: this.state.longitude,
+				latitudeDelta: LATITUDE_DELTA,
+				longitudeDelta: LONGITUDE_DELTA
+			});
+		}, 3000)
+	}
+
+	onRegionChange(region) {
+		this.setState({latitude: region.latitude, longitude: region.longitude});
+	}
 
 	render() {
 		const location = {
 			latitude: this.state.locationResult == null ? 37.78825 : this.state.locationResult.coords.latitude,
 			longitude: this.state.locationResult == null ? -122.4324 : this.state.locationResult.coords.longitude,
 		}
+		const count = ( this.state.timeLeft > 0 ) ? this.secondsToMMSS(this.state.timeLeft) : '00:00'
 		return (
 			<View style={styles.container}>
 				<MapView
@@ -90,7 +120,9 @@ export default class CreateGameScreen extends React.Component {
 					showUserLocation
 					followUserLocation
 					loadingEnabled
-					region={this.getMapRegion()}
+					showsMyLocationButton={true}
+					initialRegion={this.getInitialRegion()}
+					onRegionChangeComplete={(region) => {this.onRegionChange(region)}}
 				>
 					<Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />
 					<Marker.Animated
@@ -103,8 +135,18 @@ export default class CreateGameScreen extends React.Component {
 				</MapView>
 				<View style={styles.buttonContainer}>
 					<TouchableOpacity style={[styles.bubble, styles.button]}>
-						<Text style={styles.bottomBarContent}>
-							{parseFloat(this.state.distanceTravelled).toFixed(2)} km
+						<Text style={{color: 'black', fontWeight: 'bold'}}>
+							FOUND MY SPOT!
+						</Text>
+					</TouchableOpacity>
+				</View>
+				<View style={styles.statsContainer}>
+					<TouchableOpacity style={[styles.bubble, styles.button]}>
+						<Text>
+							Time Left: {count}
+						</Text>
+						<Text>
+							Distance Travelled: {parseFloat(this.state.distanceTravelled).toFixed(2)} km
 						</Text>
 					</TouchableOpacity>
 				</View>
@@ -124,21 +166,43 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: 'flex-end'
 	},
-	buttonContainer: {
+	statsContainer: {
 		flexDirection:'row',
 		flexWrap:'wrap',
 		alignItems: 'center',
 		justifyContent: 'center',
 		position: 'absolute',
-		bottom: 40
+		top: 40
+	},
+	buttonContainer: {
+		width: '60%',
+		flexDirection:'row',
+		flexWrap:'wrap',
+		alignItems: 'center',
+		justifyContent: 'center',
+		position: 'absolute',
+		bottom: 40,
 	},
 	map: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-    }
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+	},
+	bubble: {
+		flex: 1,
+		backgroundColor: "rgba(255,255,255,0.7)",
+		paddingHorizontal: 18,
+		paddingVertical: 12,
+		borderRadius: 20
+	},
+	button: {
+		width: 80,
+		paddingHorizontal: 12,
+		alignItems: "center",
+		marginHorizontal: 10
+	},
 });
 
 const mapStyle = [
